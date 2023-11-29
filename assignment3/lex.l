@@ -11,7 +11,7 @@ ws {delim}+
 
 typedef long YYSTYPE;
 
-extern long yylval;
+extern int yylval;
 extern int line_no;
 extern A_ID *current_id;
 

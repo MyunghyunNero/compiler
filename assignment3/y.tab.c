@@ -43,7 +43,6 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
-/* Identify Bison output.  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>  // 이거 없으면 strlen 같은 함수 인식 못해서 에러-> 추가해줘서 해결
@@ -91,6 +90,26 @@ BOOLEAN isNotSameType(A_TYPE *, A_TYPE *);
 BOOLEAN isPointerOrArrayType(A_TYPE *);
 void syntax_error();
 void initialize();
+void print_ast(A_NODE *);
+void prt_program(A_NODE *, int);
+
+void prt_initializer(A_NODE *, int);
+void prt_arg_expr_list(A_NODE *, int);
+void prt_statement(A_NODE *, int);
+void prt_statement_list(A_NODE *, int);
+void prt_for_expression(A_NODE *, int);
+void prt_expression(A_NODE *, int);
+void prt_A_TYPE(A_TYPE *, int);
+void prt_A_ID_LIST(A_ID *, int);
+void prt_A_ID(A_ID *, int);
+void prt_A_ID_NAME(A_ID *, int);
+void prt_STRING(char *, int);
+void prt_integer(int, int);
+
+void print_node(A_NODE *,int);
+void print_space(int);
+
+extern A_TYPE *int_type, *float_type, *char_type, *void_type, *string_type;
 // make new node for syntax tree
 A_NODE *makeNode (NODE_NAME n, A_NODE *a, A_NODE *b, A_NODE *c)
 {
@@ -577,6 +596,14 @@ void initialize()
 				setDeclaratorTypeAndKind(makeDummyIdentifier(),int_type,ID_PARM)),
 			ID_FUNC);
 }
+
+BOOLEAN isPointerOrArrayType(A_TYPE *t) {     //page 321에 정의 됨 -> 안하면 정의 안되어있다고 오류나옴
+	if(t && (t->kind == T_POINTER || t->kind == T_ARRAY))
+		return(TRUE);
+	else
+		return(FALSE);
+}
+
 void syntax_error(int i,char *s)
 {
 	syntax_err++;
@@ -607,12 +634,423 @@ void syntax_error(int i,char *s)
 		printf(" near %s\n", yytext);
 }
 
-BOOLEAN isPointerOrArrayType(A_TYPE *t) {     //page 321에 정의 됨 -> 안하면 정의 안되어있다고 오류나옴
-	if(t && (t->kind == T_POINTER || t->kind == T_ARRAY))
-		return(TRUE);
-	else
-		return(FALSE);
+char * node_name[] = {
+	"N_NULL",
+	"N_PROGRAM",
+	"N_EXP_IDENT",
+	"N_EXP_INT_CONST",
+	"N_EXP_FLOAT_CONST",
+	"N_EXP_CHAR_CONST",
+	"N_EXP_STRING_LITERAL",
+	"N_EXP_ARRAY",
+	"N_EXP_FUNCTION_CALL",
+	"N_EXP_STRUCT",
+	"N_EXP_ARROW",
+	"N_EXP_POST_INC",
+	"N_EXP_POST_DEC",
+	"N_EXP_PRE_INC",
+	"N_EXP_PRE_DEC",
+	"N_EXP_AMP",
+	"N_EXP_STAR",
+	"N_EXP_NOT",
+	"N_EXP_PLUS",
+	"N_EXP_MINUS",
+	"N_EXP_SIZE_EXP",
+	"N_EXP_SIZE_TYPE",
+	"N_EXP_CAST",
+	"N_EXP_MUL",
+	"N_EXP_DIV",
+	"N_EXP_MOD",
+	"N_EXP_ADD",
+	"N_EXP_SUB",
+	"N_EXP_LSS",
+	"N_EXP_GTR",
+	"N_EXP_LEQ",
+	"N_EXP_GEQ",
+	"N_EXP_NEQ",
+	"N_EXP_EQL",
+	"N_EXP_AND",
+	"N_EXP_OR",
+	"N_EXP_ASSIGN",
+	
+	"N_ARG_LIST",
+	"N_ARG_LIST_NIL",
+	
+	"N_STMT_LABEL_CASE",
+	"N_STMT_LABEL_DEFAULT",
+	"N_STMT_COMPOUND",
+	"N_STMT_EMPTY",
+	"N_STMT_EXPRESSION",
+	"N_STMT_IF",
+	"N_STMT_IF_ELSE",
+	"N_STMT_SWITCH",
+	"N_STMT_WHILE",
+	"N_STMT_DO",
+	"N_STMT_FOR",
+	"N_STMT_RETURN",
+	"N_STMT_CONTINUE",
+	"N_STMT_BREAK",
+	
+	"N_FOR_EXP",
+	"N_STMT_LIST",
+	"N_STMT_LIST_NIL",
+	
+	"N_INIT_LIST",
+	"N_INIT_LIST_ONE",
+	"N_INIT_LIST_NIL"};
+
+
+void print_node(A_NODE *node, int s)
+{
+	print_space(s);
+	printf("%s\n", node_name[node->name]);
 }
+
+void print_space(int s)
+{
+	int i;
+	for(i=1; i<=s; i++) printf("|  ");
+}
+
+void print_ast(A_NODE *node) 
+{
+	printf("=======  syntax tree  ==========\n");
+	prt_program(node,0);
+}
+
+void prt_program(A_NODE *node, int s)
+{
+	print_node(node,s);
+
+	switch(node->name) {
+
+	   case N_PROGRAM:
+		prt_A_ID_LIST(node->clink, s+1);
+		break;
+	   default :
+		printf("****syntax tree error******");
+	}
+}
+
+void prt_initializer(A_NODE *node, int s)
+{
+	print_node(node,s);
+
+	switch(node->name) {
+
+	   case N_INIT_LIST:
+		prt_initializer(node->llink, s+1);
+		prt_initializer(node->rlink, s+1);
+		break;
+	   case N_INIT_LIST_ONE:
+		prt_expression(node->clink, s+1);
+		break;
+	   case N_INIT_LIST_NIL:
+		break;
+	   default :
+		printf("****syntax tree error******");
+	}
+}
+
+
+void prt_expression(A_NODE *node, int s)
+{
+	print_node(node,s);
+	switch(node->name) {
+
+	   case N_EXP_IDENT : 
+		prt_A_ID_NAME(node->clink, s+1);
+		break;
+	   case N_EXP_INT_CONST :
+		prt_integer(node->clink, s+1);
+		break;
+	   case N_EXP_FLOAT_CONST :
+ 		prt_STRING(node->clink, s+1);
+		break;
+	   case N_EXP_CHAR_CONST :
+ 		prt_integer(node->clink, s+1);
+		break;
+	   case N_EXP_STRING_LITERAL :
+		prt_STRING(node->clink, s+1);
+		break;
+	   case N_EXP_ARRAY :
+		prt_expression(node->llink, s+1);
+		prt_expression(node->rlink, s+1);
+		break;
+	   case N_EXP_FUNCTION_CALL : 
+		prt_expression(node->llink, s+1);
+		prt_arg_expr_list(node->rlink, s+1);
+		break;
+	   case N_EXP_STRUCT : 
+	   case N_EXP_ARROW : 
+		prt_expression(node->llink, s+1);
+		prt_STRING(node->rlink, s+1);
+		break;
+	   case N_EXP_POST_INC :
+	   case N_EXP_POST_DEC :
+	   case N_EXP_PRE_INC :
+	   case N_EXP_PRE_DEC :
+	   case N_EXP_AMP :
+	   case N_EXP_STAR :
+	   case N_EXP_NOT :
+	   case N_EXP_PLUS :
+	   case N_EXP_MINUS :
+	   case N_EXP_SIZE_EXP :
+		prt_expression(node->clink, s+1);
+   		break;
+	   case N_EXP_SIZE_TYPE :
+		prt_A_TYPE(node->clink, s+1);
+   		break;
+	   case N_EXP_CAST :
+		prt_A_TYPE(node->llink, s+1);
+		prt_expression(node->rlink, s+1);
+   		break;
+	   case N_EXP_MUL :
+	   case N_EXP_DIV :
+	   case N_EXP_MOD :
+	   case N_EXP_ADD :
+	   case N_EXP_SUB : 
+	   case N_EXP_LSS :
+	   case N_EXP_GTR :
+	   case N_EXP_LEQ :
+	   case N_EXP_GEQ :
+	   case N_EXP_NEQ :
+	   case N_EXP_EQL :
+	   case N_EXP_AND :
+	   case N_EXP_OR :
+	   case N_EXP_ASSIGN :
+		prt_expression(node->llink, s+1);
+		prt_expression(node->rlink, s+1);
+   		break;
+	   default : 
+		printf("****syntax tree error******");
+	}
+}
+
+void prt_arg_expr_list(A_NODE *node, int s)
+{
+	print_node(node,s);
+
+	switch(node->name) {
+
+	   case N_ARG_LIST : 
+		prt_expression(node->llink, s+1);
+		prt_arg_expr_list(node->rlink, s+1);
+		break;
+	   case N_ARG_LIST_NIL : 
+		break;
+	   default :
+		printf("****syntax tree error******");
+	}	
+}
+
+void prt_statement(A_NODE *node, int s)
+{
+	print_node(node,s);
+	 
+	switch(node->name) {
+	   case N_STMT_LABEL_CASE :
+		prt_expression(node->llink, s+1);
+		prt_statement(node->rlink, s+1);
+		break;
+	   case N_STMT_LABEL_DEFAULT :
+		prt_statement(node->clink, s+1);
+		break;
+	   case N_STMT_COMPOUND:
+		if(node->llink) 
+			prt_A_ID_LIST(node->llink, s+1);
+		prt_statement_list(node->rlink, s+1);
+		break;
+	   case N_STMT_EMPTY:
+		break;
+	   case N_STMT_EXPRESSION:
+		prt_expression(node->clink, s+1);
+		break;
+	   case N_STMT_IF_ELSE:
+		prt_expression(node->llink, s+1);
+		prt_statement(node->clink, s+1);
+		prt_statement(node->rlink, s+1);
+		break;
+	   case N_STMT_IF:
+	   case N_STMT_SWITCH:
+		prt_expression(node->llink, s+1);
+		prt_statement(node->rlink, s+1);
+		break;
+	   case N_STMT_WHILE:
+		prt_expression(node->llink, s+1);
+		prt_statement(node->rlink, s+1);
+		break;
+	   case N_STMT_DO:
+		prt_statement(node->llink, s+1);
+		prt_expression(node->rlink, s+1);
+		break;
+	   case N_STMT_FOR:
+		prt_for_expression(node->llink, s+1);
+		prt_statement(node->rlink, s+1);
+		break;
+	   case N_STMT_CONTINUE:
+		break;
+	   case N_STMT_BREAK:
+		break;
+	   case N_STMT_RETURN:
+		if(node->clink) 
+			prt_expression(node->clink, s+1);
+		break;
+	   default :
+		printf("****syntax tree error******");
+	}
+}
+
+void prt_statement_list(A_NODE *node, int s)
+{
+	print_node(node,s);
+
+	switch(node->name) {
+
+	case N_STMT_LIST:
+		prt_statement(node->llink, s+1);
+		prt_statement_list(node->rlink, s+1);
+		break;
+	case N_STMT_LIST_NIL:
+		break;
+	default :
+		printf("****syntax tree error******");
+		
+	}
+}
+void prt_for_expression(A_NODE *node, int s)
+{
+	print_node(node,s);
+	
+	switch(node->name) {
+		
+	   case N_FOR_EXP :
+		if(node->llink) 
+			prt_expression(node->llink, s+1);
+		if(node->clink) 
+			prt_expression(node->clink, s+1);
+		if(node->rlink) 
+			prt_expression(node->rlink, s+1);
+		break;
+	   default :
+		printf("****syntax tree error******");
+	}
+}
+
+void prt_integer(int a, int s)
+{
+	print_space(s);
+	printf("%d\n", a);
+}
+
+void prt_STRING(char *str, int s) {
+	print_space(s);
+	printf("%s\n", str);
+}
+
+char *type_kind_name[]={"NULL","ENUM","ARRAY","STRUCT","UNION","FUNC","POINTER","VOID"};
+	
+void prt_A_TYPE(A_TYPE *t, int s) 
+{
+	print_space(s);
+	if (t==int_type) 
+		printf("(int)\n");
+	else if (t==float_type) 
+		printf("(float)\n");
+	else if (t==char_type) 
+		printf("(char %d)\n",t->size);
+	else if (t==void_type)
+		printf("(void)");
+	else if (t->kind==T_NULL)
+		printf("(null)");
+	else if (t->prt)
+		printf("(DONE:%x)\n",t);
+	else 
+	   switch (t->kind) {
+		case T_ENUM:
+			t->prt=TRUE;
+			printf("ENUM\n");
+			print_space(s); printf("|  ENUMERATORS\n");
+			prt_A_ID_LIST(t->field,s+2);
+			break;
+		case T_POINTER:
+			t->prt=TRUE;
+			printf("POINTER\n");
+			print_space(s); printf("|  ELEMENT_TYPE\n");
+			prt_A_TYPE(t->element_type,s+2);
+			break;
+		case T_ARRAY:
+			t->prt=TRUE;
+			printf("ARRAY\n");
+			print_space(s); printf("|  INDEX\n");
+			if (t->expr)
+				prt_expression(t->expr,s+2);
+			else {
+				print_space(s+2); printf("(none)\n");}
+			print_space(s); printf("|  ELEMENT_TYPE\n");
+			prt_A_TYPE(t->element_type,s+2);
+			break;
+		case T_STRUCT:
+			t->prt=TRUE;
+			printf("STRUCT\n");
+			print_space(s); printf("|  FIELD\n");
+			prt_A_ID_LIST(t->field,s+2);
+			break;
+		case T_UNION:
+			t->prt=TRUE;
+			printf("UNION\n");
+			print_space(s); printf("|  FIELD\n");
+			prt_A_ID_LIST(t->field,s+2);
+			break;
+		case T_FUNC:
+			t->prt=TRUE;
+			printf("FUNCTION\n");
+			print_space(s); printf("|  PARAMETER\n");
+			prt_A_ID_LIST(t->field,s+2);
+			print_space(s); printf("|  TYPE\n");
+			prt_A_TYPE(t->element_type,s+2);
+			if (t->expr) {
+				print_space(s); printf("|  BODY\n");
+				prt_statement(t->expr,s+2);}
+	   }
+}
+
+void prt_A_ID_LIST(A_ID *id, int s)
+{
+	while (id) {
+		prt_A_ID(id,s);
+		id=id->link;
+	}
+}
+
+char *id_kind_name[]={"NULL","VAR","FUNC","PARM","FIELD","TYPE","ENUM","STRUCT","ENUM_LITERAL"};
+char *spec_name[]={"NULL","AUTO","TYPEDEF","STATIC"};
+
+void prt_A_ID_NAME(A_ID *id, int s)
+{
+	print_space(s);
+	printf("(ID=\"%s\") TYPE:%x KIND:%s SPEC=%s LEV=%d \n", id->name, id->type,
+		id_kind_name[id->kind], spec_name[id->specifier],id->level);
+}
+
+void prt_A_ID(A_ID *id, int s)
+{
+	print_space(s);
+	printf("(ID=\"%s\") TYPE:%x KIND:%s SPEC=%s LEV=%d\n", id->name, id->type,
+		id_kind_name[id->kind], spec_name[id->specifier],id->level);
+	if (id->type) {
+		print_space(s);
+		printf("|  TYPE\n");
+		prt_A_TYPE(id->type,s+2);}
+	if (id->init) {
+		print_space(s);
+		printf("|  INIT\n");
+		if (id->kind==ID_ENUM_LITERAL)
+			prt_expression(id->init,s+2);
+		else 
+			prt_initializer(id->init,s+2); }
+}
+/* Identify Bison output.  */
 #define YYBISON 1
 
 /* Bison version.  */
@@ -804,7 +1242,7 @@ typedef int YYSTYPE;
 
 
 /* Line 216 of yacc.c.  */
-#line 239 "y.tab.c"
+#line 240 "y.tab.c"
 
 #ifdef short
 # undef short
@@ -1160,24 +1598,24 @@ static const yytype_int16 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    40,    40,    43,    44,    47,    48,    51,    51,    53,
-      53,    57,    58,    61,    62,    65,    68,    69,    70,    71,
-      74,    75,    76,    79,    80,    83,    84,    87,    88,    91,
-      92,    95,    96,    99,   100,   101,   104,   105,   104,   107,
-     107,   107,   109,   112,   113,   116,   117,   120,   123,   124,
-     127,   130,   130,   132,   132,   134,   137,   138,   141,   142,
-     142,   146,   147,   150,   151,   154,   155,   156,   158,   158,
-     163,   164,   167,   168,   171,   172,   175,   176,   179,   180,
-     183,   184,   185,   188,   189,   190,   191,   192,   195,   196,
-     199,   200,   203,   204,   205,   206,   207,   208,   211,   212,
-     215,   215,   220,   221,   224,   225,   226,   229,   230,   231,
-     234,   237,   238,   241,   242,   243,   246,   247,   250,   251,
-     254,   255,   258,   261,   264,   267,   268,   271,   274,   275,
-     278,   279,   282,   285,   288,   291,   292,   293,   296,   297,
-     298,   299,   300,   303,   306,   307,   308,   311,   312,   313,
-     314,   317,   318,   321,   322,   323,   324,   325,   326,   327,
-     328,   329,   330,   333,   334,   335,   336,   337,   338,   339,
-     342,   343,   344,   345,   346,   347,   350
+       0,    41,    41,    44,    45,    48,    49,    52,    52,    54,
+      54,    58,    59,    62,    63,    66,    69,    70,    71,    72,
+      75,    76,    77,    80,    81,    84,    85,    88,    89,    92,
+      93,    96,    97,   100,   101,   102,   105,   106,   105,   108,
+     108,   108,   110,   113,   114,   117,   118,   121,   124,   125,
+     128,   131,   131,   133,   133,   135,   138,   139,   142,   143,
+     143,   147,   148,   151,   152,   155,   156,   157,   159,   159,
+     164,   165,   168,   169,   172,   173,   176,   177,   180,   181,
+     184,   185,   186,   189,   190,   191,   192,   193,   196,   197,
+     200,   201,   204,   205,   206,   207,   208,   209,   212,   213,
+     216,   216,   221,   222,   225,   226,   227,   230,   231,   232,
+     235,   238,   239,   242,   243,   244,   247,   248,   251,   252,
+     255,   256,   259,   262,   265,   268,   269,   272,   275,   276,
+     279,   280,   283,   286,   289,   292,   293,   294,   297,   298,
+     299,   300,   301,   304,   307,   308,   309,   312,   313,   314,
+     315,   318,   319,   322,   323,   324,   325,   326,   327,   328,
+     329,   330,   331,   334,   335,   336,   337,   338,   339,   340,
+     343,   344,   345,   346,   347,   348,   351
 };
 #endif
 
@@ -2333,883 +2771,883 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 40 "yacc.y"
+#line 41 "yacc.y"
     {root=makeNode(N_PROGRAM,NIL,(yyvsp[(1) - (1)]),NIL); checkForwardReference();}
     break;
 
   case 3:
-#line 43 "yacc.y"
+#line 44 "yacc.y"
     {(yyval) = (yyvsp[(1) - (1)]);}
     break;
 
   case 4:
-#line 44 "yacc.y"
+#line 45 "yacc.y"
     {(yyval)=linkDeclaratorList((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]));}
     break;
 
   case 5:
-#line 47 "yacc.y"
-    {(yyval)=(yyvsp[(1) - (1)]);}
-    break;
-
-  case 6:
 #line 48 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
+  case 6:
+#line 49 "yacc.y"
+    {(yyval)=(yyvsp[(1) - (1)]);}
+    break;
+
   case 7:
-#line 51 "yacc.y"
+#line 52 "yacc.y"
     {(yyval)=setFunctionDeclaratorSpecifier((yyvsp[(2) - (2)]),(yyvsp[(1) - (2)]));}
     break;
 
   case 8:
-#line 52 "yacc.y"
+#line 53 "yacc.y"
     {(yyval)=setFunctionDeclaratorBody((yyvsp[(3) - (4)]),(yyvsp[(4) - (4)]));}
     break;
 
   case 9:
-#line 53 "yacc.y"
+#line 54 "yacc.y"
     {(yyval)=setFunctionDeclaratorSpecifier((yyvsp[(1) - (1)]),makeSpecifier(int_type,0));}
     break;
 
   case 10:
-#line 54 "yacc.y"
+#line 55 "yacc.y"
     {(yyval)=setFunctionDeclaratorBody((yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]));}
     break;
 
   case 11:
-#line 57 "yacc.y"
+#line 58 "yacc.y"
     {(yyval)=NIL;}
     break;
 
   case 12:
-#line 58 "yacc.y"
+#line 59 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 13:
-#line 61 "yacc.y"
+#line 62 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 14:
-#line 62 "yacc.y"
+#line 63 "yacc.y"
     {(yyval)=linkDeclaratorList((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]));}
     break;
 
   case 15:
-#line 65 "yacc.y"
+#line 66 "yacc.y"
     {(yyval)=setDeclaratorListSpecifier((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]));}
     break;
 
   case 16:
-#line 68 "yacc.y"
+#line 69 "yacc.y"
     {(yyval)=makeSpecifier((yyvsp[(1) - (1)]),0);}
     break;
 
   case 17:
-#line 69 "yacc.y"
+#line 70 "yacc.y"
     {(yyval)=makeSpecifier(0,(yyvsp[(1) - (1)]));}
     break;
 
   case 18:
-#line 70 "yacc.y"
+#line 71 "yacc.y"
     {(yyval)=updateSpecifier((yyvsp[(2) - (2)]),(yyvsp[(1) - (2)]),0);}
     break;
 
   case 19:
-#line 71 "yacc.y"
+#line 72 "yacc.y"
     {(yyval)=updateSpecifier((yyvsp[(2) - (2)]),0,(yyvsp[(1) - (2)]));}
     break;
 
   case 20:
-#line 74 "yacc.y"
+#line 75 "yacc.y"
     {(yyval)=S_AUTO;}
     break;
 
   case 21:
-#line 75 "yacc.y"
+#line 76 "yacc.y"
     {(yyval)=S_STATIC;}
     break;
 
   case 22:
-#line 76 "yacc.y"
+#line 77 "yacc.y"
     {(yyval)=S_TYPEDEF;}
     break;
 
   case 23:
-#line 79 "yacc.y"
+#line 80 "yacc.y"
     {(yyval)=makeDummyIdentifier();}
     break;
 
   case 24:
-#line 80 "yacc.y"
+#line 81 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 25:
-#line 83 "yacc.y"
+#line 84 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 26:
-#line 84 "yacc.y"
+#line 85 "yacc.y"
     {(yyval)=linkDeclaratorList((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]));}
     break;
 
   case 27:
-#line 87 "yacc.y"
+#line 88 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 28:
-#line 88 "yacc.y"
+#line 89 "yacc.y"
     {(yyval)=setDeclaratorInit((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]));}
     break;
 
   case 29:
-#line 91 "yacc.y"
+#line 92 "yacc.y"
     {(yyval)=makeNode(N_INIT_LIST_ONE,NIL,(yyvsp[(1) - (1)]),NIL);}
     break;
 
   case 30:
-#line 92 "yacc.y"
+#line 93 "yacc.y"
     {(yyval)=(yyvsp[(2) - (3)]);}
     break;
 
   case 31:
-#line 95 "yacc.y"
+#line 96 "yacc.y"
     {(yyval)=makeNode(N_INIT_LIST,(yyvsp[(1) - (1)]),NIL,makeNode(N_INIT_LIST_NIL,NIL,NIL,NIL));}
     break;
 
   case 32:
-#line 96 "yacc.y"
+#line 97 "yacc.y"
     {(yyval)=makeNodeList(N_INIT_LIST,(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]));}
     break;
 
   case 33:
-#line 99 "yacc.y"
-    {(yyval) = (yyvsp[(1) - (1)]);}
-    break;
-
-  case 34:
 #line 100 "yacc.y"
     {(yyval) = (yyvsp[(1) - (1)]);}
     break;
 
-  case 35:
+  case 34:
 #line 101 "yacc.y"
     {(yyval) = (yyvsp[(1) - (1)]);}
     break;
 
+  case 35:
+#line 102 "yacc.y"
+    {(yyval) = (yyvsp[(1) - (1)]);}
+    break;
+
   case 36:
-#line 104 "yacc.y"
+#line 105 "yacc.y"
     {(yyval)=setTypeStructOrEnumIdentifier((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]),ID_STRUCT);}
     break;
 
   case 37:
-#line 105 "yacc.y"
+#line 106 "yacc.y"
     { (yyval)=current_id;current_level++;}
     break;
 
   case 38:
-#line 106 "yacc.y"
+#line 107 "yacc.y"
     {checkForwardReference();(yyval)=setTypeField((yyvsp[(3) - (7)]),(yyvsp[(6) - (7)]));current_level--; current_id=(yyvsp[(5) - (7)]);}
     break;
 
   case 39:
-#line 107 "yacc.y"
+#line 108 "yacc.y"
     {(yyval)=makeType((yyvsp[(1) - (1)]));}
     break;
 
   case 40:
-#line 107 "yacc.y"
+#line 108 "yacc.y"
     {(yyval)=current_id;current_level++;}
     break;
 
   case 41:
-#line 108 "yacc.y"
+#line 109 "yacc.y"
     {checkForwardReference();(yyval)=setTypeField((yyvsp[(2) - (6)]),(yyvsp[(5) - (6)])); current_level--;current_id=(yyvsp[(4) - (6)]);}
     break;
 
   case 42:
-#line 109 "yacc.y"
+#line 110 "yacc.y"
     {(yyval)=getTypeOfStructOrEnumRefIdentifier((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]),ID_STRUCT);}
     break;
 
   case 43:
-#line 112 "yacc.y"
+#line 113 "yacc.y"
     {(yyval)=T_STRUCT;}
     break;
 
   case 44:
-#line 113 "yacc.y"
+#line 114 "yacc.y"
     {(yyval)=T_UNION;}
     break;
 
   case 45:
-#line 116 "yacc.y"
+#line 117 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 46:
-#line 117 "yacc.y"
+#line 118 "yacc.y"
     {(yyval)=linkDeclaratorList((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]));}
     break;
 
   case 47:
-#line 120 "yacc.y"
+#line 121 "yacc.y"
     {(yyval)=setStructDeclaratorListSpecifier((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]));}
     break;
 
   case 48:
-#line 123 "yacc.y"
+#line 124 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 49:
-#line 124 "yacc.y"
+#line 125 "yacc.y"
     {(yyval)=linkDeclaratorList((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]));}
     break;
 
   case 50:
-#line 127 "yacc.y"
+#line 128 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 51:
-#line 130 "yacc.y"
+#line 131 "yacc.y"
     {(yyval)=setTypeStructOrEnumIdentifier(T_ENUM,(yyvsp[(2) - (2)]),ID_ENUM);}
     break;
 
   case 52:
-#line 131 "yacc.y"
+#line 132 "yacc.y"
     {(yyval)=setTypeField((yyvsp[(3) - (6)]),(yyvsp[(5) - (6)]));}
     break;
 
   case 53:
-#line 132 "yacc.y"
+#line 133 "yacc.y"
     {(yyval)=makeType(T_ENUM);}
     break;
 
   case 54:
-#line 133 "yacc.y"
+#line 134 "yacc.y"
     {(yyval)=setTypeField((yyvsp[(2) - (5)]),(yyvsp[(4) - (5)]));}
     break;
 
   case 55:
-#line 134 "yacc.y"
+#line 135 "yacc.y"
     {(yyval)=getTypeOfStructOrEnumRefIdentifier(T_ENUM,(yyvsp[(2) - (2)]),ID_ENUM);}
     break;
 
   case 56:
-#line 137 "yacc.y"
+#line 138 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 57:
-#line 138 "yacc.y"
+#line 139 "yacc.y"
     {(yyval)=linkDeclaratorList((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]));}
     break;
 
   case 58:
-#line 141 "yacc.y"
-    {(yyval)=setDeclaratorKind(makeIdentifier((yyvsp[(1) - (1)])),ID_ENUM_LITERAL);}
-    break;
-
-  case 59:
 #line 142 "yacc.y"
     {(yyval)=setDeclaratorKind(makeIdentifier((yyvsp[(1) - (1)])),ID_ENUM_LITERAL);}
     break;
 
-  case 60:
+  case 59:
 #line 143 "yacc.y"
+    {(yyval)=setDeclaratorKind(makeIdentifier((yyvsp[(1) - (1)])),ID_ENUM_LITERAL);}
+    break;
+
+  case 60:
+#line 144 "yacc.y"
     {(yyval)=setDeclaratorInit((yyvsp[(2) - (4)]),(yyvsp[(4) - (4)]));}
     break;
 
   case 61:
-#line 146 "yacc.y"
+#line 147 "yacc.y"
     {(yyval)=setDeclaratorElementType((yyvsp[(2) - (2)]),(yyvsp[(1) - (2)]));}
     break;
 
   case 62:
-#line 147 "yacc.y"
+#line 148 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 63:
-#line 150 "yacc.y"
+#line 151 "yacc.y"
     {(yyval)=makeType(T_POINTER);}
     break;
 
   case 64:
-#line 151 "yacc.y"
+#line 152 "yacc.y"
     {(yyval)=setTypeElementType((yyvsp[(2) - (2)]),makeType(T_POINTER));}
     break;
 
   case 65:
-#line 154 "yacc.y"
+#line 155 "yacc.y"
     {(yyval)=makeIdentifier((yyvsp[(1) - (1)]));}
     break;
 
   case 66:
-#line 155 "yacc.y"
+#line 156 "yacc.y"
     {(yyval)=(yyvsp[(2) - (3)]);}
     break;
 
   case 67:
-#line 157 "yacc.y"
+#line 158 "yacc.y"
     {(yyval)=setDeclaratorElementType((yyvsp[(1) - (4)]),setTypeExpr(makeType(T_ARRAY),(yyvsp[(3) - (4)])));}
     break;
 
   case 68:
-#line 158 "yacc.y"
+#line 159 "yacc.y"
     {(yyval)=current_id;current_level++;}
     break;
 
   case 69:
-#line 160 "yacc.y"
+#line 161 "yacc.y"
     {checkForwardReference();current_id=(yyvsp[(3) - (5)]);current_level--; (yyval)=setDeclaratorElementType((yyvsp[(1) - (5)]),setTypeField(makeType(T_FUNC),(yyvsp[(4) - (5)])));}
     break;
 
   case 70:
-#line 163 "yacc.y"
+#line 164 "yacc.y"
     {(yyval)=NIL;}
     break;
 
   case 71:
-#line 164 "yacc.y"
+#line 165 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 72:
-#line 167 "yacc.y"
+#line 168 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 73:
-#line 168 "yacc.y"
+#line 169 "yacc.y"
     {(yyval)=linkDeclaratorList((yyvsp[(1) - (3)]),setDeclaratorKind(makeDummyIdentifier(),ID_PARM));}
     break;
 
   case 74:
-#line 171 "yacc.y"
+#line 172 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 75:
-#line 172 "yacc.y"
+#line 173 "yacc.y"
     {(yyval)=linkDeclaratorList((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]));}
     break;
 
   case 76:
-#line 175 "yacc.y"
+#line 176 "yacc.y"
     {(yyval)=setParameterDeclaratorSpecifier((yyvsp[(2) - (2)]),(yyvsp[(1) - (2)]));}
     break;
 
   case 77:
-#line 176 "yacc.y"
+#line 177 "yacc.y"
     {(yyval)=setParameterDeclaratorSpecifier(setDeclaratorType(makeDummyIdentifier(),(yyvsp[(2) - (2)])),(yyvsp[(1) - (2)]));}
     break;
 
   case 78:
-#line 179 "yacc.y"
+#line 180 "yacc.y"
     {(yyval)=NIL;}
     break;
 
   case 79:
-#line 180 "yacc.y"
+#line 181 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 80:
-#line 183 "yacc.y"
+#line 184 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 81:
-#line 184 "yacc.y"
+#line 185 "yacc.y"
     {(yyval)=makeType(T_POINTER);}
     break;
 
   case 82:
-#line 185 "yacc.y"
+#line 186 "yacc.y"
     {(yyval)=setTypeElementType((yyvsp[(2) - (2)]),makeType(T_POINTER));}
     break;
 
   case 83:
-#line 188 "yacc.y"
+#line 189 "yacc.y"
     {(yyval)=(yyvsp[(2) - (3)]);}
     break;
 
   case 84:
-#line 189 "yacc.y"
+#line 190 "yacc.y"
     {(yyval)=setTypeExpr(makeType(T_ARRAY),(yyvsp[(2) - (3)]));}
     break;
 
   case 85:
-#line 190 "yacc.y"
+#line 191 "yacc.y"
     {(yyval)=setTypeElementType((yyvsp[(1) - (4)]),setTypeExpr(makeType(T_ARRAY),(yyvsp[(3) - (4)])));}
     break;
 
   case 86:
-#line 191 "yacc.y"
+#line 192 "yacc.y"
     {(yyval)=setTypeExpr(makeType(T_FUNC),(yyvsp[(2) - (3)]));}
     break;
 
   case 87:
-#line 192 "yacc.y"
+#line 193 "yacc.y"
     {(yyval)=setTypeElementType((yyvsp[(1) - (4)]),setTypeExpr(makeType(T_FUNC),(yyvsp[(3) - (4)])));}
     break;
 
   case 88:
-#line 195 "yacc.y"
+#line 196 "yacc.y"
     {(yyval)=makeNode(N_STMT_LIST_NIL,NIL,NIL,NIL);}
     break;
 
   case 89:
-#line 196 "yacc.y"
+#line 197 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 90:
-#line 199 "yacc.y"
+#line 200 "yacc.y"
     {(yyval)=makeNode(N_STMT_LIST,(yyvsp[(1) - (1)]),NIL,makeNode(N_STMT_LIST_NIL,NIL,NIL,NIL));}
     break;
 
   case 91:
-#line 200 "yacc.y"
+#line 201 "yacc.y"
     {(yyval)=makeNodeList(N_STMT_LIST,(yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]));}
     break;
 
   case 92:
-#line 203 "yacc.y"
-    {(yyval)=(yyvsp[(1) - (1)]);}
-    break;
-
-  case 93:
 #line 204 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
-  case 94:
+  case 93:
 #line 205 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
-  case 95:
+  case 94:
 #line 206 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
-  case 96:
+  case 95:
 #line 207 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
-  case 97:
+  case 96:
 #line 208 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
+  case 97:
+#line 209 "yacc.y"
+    {(yyval)=(yyvsp[(1) - (1)]);}
+    break;
+
   case 98:
-#line 211 "yacc.y"
+#line 212 "yacc.y"
     {(yyval)=makeNode(N_STMT_LABEL_CASE, (yyvsp[(2) - (4)]),NIL,(yyvsp[(4) - (4)]));}
     break;
 
   case 99:
-#line 212 "yacc.y"
+#line 213 "yacc.y"
     {(yyval)=makeNode(N_STMT_LABEL_DEFAULT,NIL,(yyvsp[(3) - (3)]),NIL);}
     break;
 
   case 100:
-#line 215 "yacc.y"
+#line 216 "yacc.y"
     {(yyval)=current_id;current_level++;}
     break;
 
   case 101:
-#line 217 "yacc.y"
+#line 218 "yacc.y"
     {checkForwardReference(); (yyval)=makeNode(N_STMT_COMPOUND,(yyvsp[(3) - (5)]),NIL,(yyvsp[(4) - (5)])); current_id=(yyvsp[(2) - (5)]); current_level--;}
     break;
 
   case 102:
-#line 220 "yacc.y"
+#line 221 "yacc.y"
     {(yyval)=makeNode(N_STMT_EMPTY,NIL,NIL,NIL);}
     break;
 
   case 103:
-#line 221 "yacc.y"
+#line 222 "yacc.y"
     {(yyval)=makeNode(N_STMT_EXPRESSION,NIL,(yyvsp[(1) - (2)]),NIL);}
     break;
 
   case 104:
-#line 224 "yacc.y"
+#line 225 "yacc.y"
     {(yyval)=makeNode(N_STMT_IF,(yyvsp[(3) - (5)]),NIL,(yyvsp[(5) - (5)]));}
     break;
 
   case 105:
-#line 225 "yacc.y"
+#line 226 "yacc.y"
     {(yyval)=makeNode(N_STMT_IF_ELSE,(yyvsp[(3) - (7)]),(yyvsp[(5) - (7)]),(yyvsp[(7) - (7)]));}
     break;
 
   case 106:
-#line 226 "yacc.y"
+#line 227 "yacc.y"
     {(yyval)=makeNode(N_STMT_SWITCH,(yyvsp[(3) - (5)]),NIL,(yyvsp[(5) - (5)]));}
     break;
 
   case 107:
-#line 229 "yacc.y"
+#line 230 "yacc.y"
     {(yyval)=makeNode(N_STMT_WHILE,(yyvsp[(3) - (5)]),NIL,(yyvsp[(5) - (5)]));}
     break;
 
   case 108:
-#line 230 "yacc.y"
+#line 231 "yacc.y"
     {(yyval)=makeNode(N_STMT_DO,(yyvsp[(2) - (7)]),NIL,(yyvsp[(5) - (7)]));}
     break;
 
   case 109:
-#line 231 "yacc.y"
+#line 232 "yacc.y"
     {(yyval)=makeNode(N_STMT_FOR,(yyvsp[(3) - (5)]),NIL,(yyvsp[(5) - (5)]));}
     break;
 
   case 110:
-#line 234 "yacc.y"
+#line 235 "yacc.y"
     {(yyval)=makeNode(N_FOR_EXP,(yyvsp[(1) - (5)]),(yyvsp[(3) - (5)]),(yyvsp[(5) - (5)]));}
     break;
 
   case 111:
-#line 237 "yacc.y"
+#line 238 "yacc.y"
     {(yyval)=NIL;}
     break;
 
   case 112:
-#line 238 "yacc.y"
+#line 239 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 113:
-#line 241 "yacc.y"
+#line 242 "yacc.y"
     {(yyval)=makeNode(N_STMT_RETURN,NIL,(yyvsp[(2) - (3)]),NIL);}
     break;
 
   case 114:
-#line 242 "yacc.y"
+#line 243 "yacc.y"
     {(yyval)=makeNode(N_STMT_CONTINUE,NIL,NIL,NIL);}
     break;
 
   case 115:
-#line 243 "yacc.y"
+#line 244 "yacc.y"
     {(yyval)=makeNode(N_STMT_BREAK,NIL,NIL,NIL);}
     break;
 
   case 116:
-#line 246 "yacc.y"
+#line 247 "yacc.y"
     {(yyval)=makeNode(N_ARG_LIST_NIL,NIL,NIL,NIL);}
     break;
 
   case 117:
-#line 247 "yacc.y"
+#line 248 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 118:
-#line 250 "yacc.y"
+#line 251 "yacc.y"
     {(yyval)=makeNode(N_ARG_LIST,(yyvsp[(1) - (1)]),NIL,makeNode(N_ARG_LIST_NIL,NIL,NIL,NIL));}
     break;
 
   case 119:
-#line 251 "yacc.y"
+#line 252 "yacc.y"
     {(yyval)=makeNodeList(N_ARG_LIST,(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]));}
     break;
 
   case 120:
-#line 254 "yacc.y"
+#line 255 "yacc.y"
     {(yyval)=NIL;}
     break;
 
   case 121:
-#line 255 "yacc.y"
+#line 256 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 122:
-#line 258 "yacc.y"
+#line 259 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 123:
-#line 261 "yacc.y"
+#line 262 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 124:
-#line 264 "yacc.y"
+#line 265 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 125:
-#line 267 "yacc.y"
+#line 268 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 126:
-#line 268 "yacc.y"
+#line 269 "yacc.y"
     {(yyval)=makeNode(N_EXP_ASSIGN,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 127:
-#line 271 "yacc.y"
+#line 272 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 128:
-#line 274 "yacc.y"
+#line 275 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 129:
-#line 275 "yacc.y"
+#line 276 "yacc.y"
     {(yyval)=makeNode(N_EXP_OR,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 130:
-#line 278 "yacc.y"
+#line 279 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 131:
-#line 279 "yacc.y"
+#line 280 "yacc.y"
     {(yyval)=makeNode(N_EXP_AND,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 132:
-#line 282 "yacc.y"
+#line 283 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 133:
-#line 285 "yacc.y"
+#line 286 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 134:
-#line 288 "yacc.y"
+#line 289 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 135:
-#line 291 "yacc.y"
+#line 292 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 136:
-#line 292 "yacc.y"
+#line 293 "yacc.y"
     {(yyval)=makeNode(N_EXP_EQL,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 137:
-#line 293 "yacc.y"
+#line 294 "yacc.y"
     {(yyval)=makeNode(N_EXP_NEQ,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 138:
-#line 296 "yacc.y"
+#line 297 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 139:
-#line 297 "yacc.y"
+#line 298 "yacc.y"
     {(yyval)=makeNode(N_EXP_LSS,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 140:
-#line 298 "yacc.y"
+#line 299 "yacc.y"
     {(yyval)=makeNode(N_EXP_GTR,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 141:
-#line 299 "yacc.y"
+#line 300 "yacc.y"
     {(yyval)=makeNode(N_EXP_LEQ,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 142:
-#line 300 "yacc.y"
+#line 301 "yacc.y"
     {(yyval)=makeNode(N_EXP_GEQ,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 143:
-#line 303 "yacc.y"
+#line 304 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 144:
-#line 306 "yacc.y"
+#line 307 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 145:
-#line 307 "yacc.y"
+#line 308 "yacc.y"
     {(yyval)=makeNode(N_EXP_ADD,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 146:
-#line 308 "yacc.y"
+#line 309 "yacc.y"
     {(yyval)=makeNode(N_EXP_SUB,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 147:
-#line 311 "yacc.y"
+#line 312 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 148:
-#line 312 "yacc.y"
+#line 313 "yacc.y"
     {(yyval)=makeNode(N_EXP_MUL,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 149:
-#line 313 "yacc.y"
+#line 314 "yacc.y"
     {(yyval)= makeNode(N_EXP_DIV,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 150:
-#line 314 "yacc.y"
+#line 315 "yacc.y"
     {(yyval)= makeNode(N_EXP_MOD,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 151:
-#line 317 "yacc.y"
+#line 318 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 152:
-#line 318 "yacc.y"
+#line 319 "yacc.y"
     {(yyval)=makeNode(N_EXP_CAST,(yyvsp[(2) - (4)]),NIL,(yyvsp[(4) - (4)]));}
     break;
 
   case 153:
-#line 321 "yacc.y"
+#line 322 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 154:
-#line 322 "yacc.y"
+#line 323 "yacc.y"
     {(yyval)=makeNode(N_EXP_PRE_INC,NIL,(yyvsp[(2) - (2)]),NIL);}
     break;
 
   case 155:
-#line 323 "yacc.y"
+#line 324 "yacc.y"
     {(yyval)=makeNode(N_EXP_PRE_DEC,NIL,(yyvsp[(2) - (2)]),NIL);}
     break;
 
   case 156:
-#line 324 "yacc.y"
+#line 325 "yacc.y"
     {(yyval)=makeNode(N_EXP_AMP,NIL,(yyvsp[(2) - (2)]),NIL);}
     break;
 
   case 157:
-#line 325 "yacc.y"
+#line 326 "yacc.y"
     {(yyval)=makeNode(N_EXP_STAR,NIL,(yyvsp[(2) - (2)]),NIL);}
     break;
 
   case 158:
-#line 326 "yacc.y"
+#line 327 "yacc.y"
     {(yyval)=makeNode(N_EXP_NOT,NIL,(yyvsp[(2) - (2)]),NIL);}
     break;
 
   case 159:
-#line 327 "yacc.y"
+#line 328 "yacc.y"
     {(yyval)=makeNode(N_EXP_MINUS,NIL,(yyvsp[(2) - (2)]),NIL);}
     break;
 
   case 160:
-#line 328 "yacc.y"
+#line 329 "yacc.y"
     {(yyval)=makeNode(N_EXP_PLUS,NIL,(yyvsp[(2) - (2)]),NIL);}
     break;
 
   case 161:
-#line 329 "yacc.y"
+#line 330 "yacc.y"
     {(yyval)=makeNode(N_EXP_SIZE_EXP,NIL,(yyvsp[(2) - (2)]),NIL);}
     break;
 
   case 162:
-#line 330 "yacc.y"
+#line 331 "yacc.y"
     {(yyval)=makeNode(N_EXP_SIZE_TYPE,NIL,(yyvsp[(3) - (4)]),NIL);}
     break;
 
   case 163:
-#line 333 "yacc.y"
+#line 334 "yacc.y"
     {(yyval)=(yyvsp[(1) - (1)]);}
     break;
 
   case 164:
-#line 334 "yacc.y"
+#line 335 "yacc.y"
     {(yyval)=makeNode(N_EXP_ARRAY,(yyvsp[(1) - (4)]),NIL,(yyvsp[(3) - (4)]));}
     break;
 
   case 165:
-#line 335 "yacc.y"
+#line 336 "yacc.y"
     {(yyval)=makeNode(N_EXP_FUNCTION_CALL,(yyvsp[(1) - (4)]),NIL,(yyvsp[(3) - (4)]));}
     break;
 
   case 166:
-#line 336 "yacc.y"
+#line 337 "yacc.y"
     {(yyval)=makeNode(N_EXP_STRUCT,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 167:
-#line 337 "yacc.y"
+#line 338 "yacc.y"
     {(yyval)=makeNode(N_EXP_ARROW,(yyvsp[(1) - (3)]),NIL,(yyvsp[(3) - (3)]));}
     break;
 
   case 168:
-#line 338 "yacc.y"
+#line 339 "yacc.y"
     {(yyval)=makeNode(N_EXP_POST_INC,NIL,(yyvsp[(1) - (2)]),NIL);}
     break;
 
   case 169:
-#line 339 "yacc.y"
+#line 340 "yacc.y"
     {(yyval)=makeNode(N_EXP_POST_DEC,NIL,(yyvsp[(1) - (2)]),NIL);}
     break;
 
   case 170:
-#line 342 "yacc.y"
+#line 343 "yacc.y"
     {(yyval)=makeNode(N_EXP_IDENT,NIL,getIdentifierDeclared((yyvsp[(1) - (1)])),NIL);}
     break;
 
   case 171:
-#line 343 "yacc.y"
+#line 344 "yacc.y"
     {(yyval)=makeNode(N_EXP_INT_CONST,NIL,(yyvsp[(1) - (1)]),NIL);}
     break;
 
   case 172:
-#line 344 "yacc.y"
+#line 345 "yacc.y"
     {(yyval)=makeNode(N_EXP_FLOAT_CONST,NIL,(yyvsp[(1) - (1)]),NIL);}
     break;
 
   case 173:
-#line 345 "yacc.y"
+#line 346 "yacc.y"
     {(yyval)=makeNode(N_EXP_CHAR_CONST,NIL,(yyvsp[(1) - (1)]),NIL);}
     break;
 
   case 174:
-#line 346 "yacc.y"
+#line 347 "yacc.y"
     {(yyval)=makeNode(N_EXP_STRING_LITERAL,NIL,(yyvsp[(1) - (1)]),NIL);}
     break;
 
   case 175:
-#line 347 "yacc.y"
+#line 348 "yacc.y"
     {(yyval)=(yyvsp[(2) - (3)]);}
     break;
 
   case 176:
-#line 350 "yacc.y"
+#line 351 "yacc.y"
     {(yyval)=setTypeNameSpecifier((yyvsp[(2) - (2)]),(yyvsp[(1) - (2)]));}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 2644 "y.tab.c"
+#line 2645 "y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -3423,7 +3861,7 @@ yyreturn:
 }
 
 
-#line 353 "yacc.y"
+#line 354 "yacc.y"
 
 
 void yyerror(char *s) {

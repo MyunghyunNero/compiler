@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include "type.h"
 
 #define YYSTYPE_IS_DECLARED 1
 typedef long YYSTYPE;
