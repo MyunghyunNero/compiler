@@ -39,52 +39,52 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     IDENTIFIER = 258,
-     TYPE_IDENTIFIER = 259,
-     FLOAT_CONSTANT = 260,
-     INTEGER_CONSTANT = 261,
-     CHARACTER_CONSTANT = 262,
-     STRING_LITERAL = 263,
-     MINUS = 264,
-     PLUS = 265,
-     PLUSPLUS = 266,
-     MINUSMINUS = 267,
-     BAR = 268,
-     AMP = 269,
-     BARBAR = 270,
-     AMPAMP = 271,
-     ARROW = 272,
-     SEMICOLON = 273,
-     LSS = 274,
-     GTR = 275,
-     LEQ = 276,
-     GEQ = 277,
-     EQL = 278,
-     NEQ = 279,
-     DOTDOTDOT = 280,
-     LP = 281,
-     RP = 282,
-     LB = 283,
-     RB = 284,
-     LR = 285,
-     RR = 286,
-     PERIOD = 287,
-     COMMA = 288,
-     EXCL = 289,
-     STAR = 290,
-     SLASH = 291,
-     PERCENT = 292,
-     ASSIGN = 293,
-     COLON = 294,
-     AUTO_SYM = 295,
-     STATIC_SYM = 296,
-     TYPEDEF_SYM = 297,
-     STRUCT_SYM = 298,
-     ENUM_SYM = 299,
-     SIZEOF_SYM = 300,
-     UNION_SYM = 301,
-     IF_SYM = 302,
-     ELSE_SYM = 303,
+     IF_PREC = 258,
+     ELSE_SYM = 259,
+     IDENTIFIER = 260,
+     TYPE_IDENTIFIER = 261,
+     FLOAT_CONSTANT = 262,
+     INTEGER_CONSTANT = 263,
+     CHARACTER_CONSTANT = 264,
+     STRING_LITERAL = 265,
+     PLUS = 266,
+     MINUS = 267,
+     PLUSPLUS = 268,
+     MINUSMINUS = 269,
+     AMP = 270,
+     BARBAR = 271,
+     AMPAMP = 272,
+     ARROW = 273,
+     SEMICOLON = 274,
+     LSS = 275,
+     GTR = 276,
+     LEQ = 277,
+     GEQ = 278,
+     EQL = 279,
+     NEQ = 280,
+     DOTDOTDOT = 281,
+     LP = 282,
+     RP = 283,
+     LB = 284,
+     RB = 285,
+     LR = 286,
+     RR = 287,
+     PERIOD = 288,
+     COMMA = 289,
+     EXCL = 290,
+     STAR = 291,
+     SLASH = 292,
+     PERCENT = 293,
+     ASSIGN = 294,
+     COLON = 295,
+     AUTO_SYM = 296,
+     STATIC_SYM = 297,
+     TYPEDEF_SYM = 298,
+     STRUCT_SYM = 299,
+     ENUM_SYM = 300,
+     SIZEOF_SYM = 301,
+     UNION_SYM = 302,
+     IF_SYM = 303,
      WHILE_SYM = 304,
      DO_SYM = 305,
      FOR_SYM = 306,
@@ -97,52 +97,52 @@
    };
 #endif
 /* Tokens.  */
-#define IDENTIFIER 258
-#define TYPE_IDENTIFIER 259
-#define FLOAT_CONSTANT 260
-#define INTEGER_CONSTANT 261
-#define CHARACTER_CONSTANT 262
-#define STRING_LITERAL 263
-#define MINUS 264
-#define PLUS 265
-#define PLUSPLUS 266
-#define MINUSMINUS 267
-#define BAR 268
-#define AMP 269
-#define BARBAR 270
-#define AMPAMP 271
-#define ARROW 272
-#define SEMICOLON 273
-#define LSS 274
-#define GTR 275
-#define LEQ 276
-#define GEQ 277
-#define EQL 278
-#define NEQ 279
-#define DOTDOTDOT 280
-#define LP 281
-#define RP 282
-#define LB 283
-#define RB 284
-#define LR 285
-#define RR 286
-#define PERIOD 287
-#define COMMA 288
-#define EXCL 289
-#define STAR 290
-#define SLASH 291
-#define PERCENT 292
-#define ASSIGN 293
-#define COLON 294
-#define AUTO_SYM 295
-#define STATIC_SYM 296
-#define TYPEDEF_SYM 297
-#define STRUCT_SYM 298
-#define ENUM_SYM 299
-#define SIZEOF_SYM 300
-#define UNION_SYM 301
-#define IF_SYM 302
-#define ELSE_SYM 303
+#define IF_PREC 258
+#define ELSE_SYM 259
+#define IDENTIFIER 260
+#define TYPE_IDENTIFIER 261
+#define FLOAT_CONSTANT 262
+#define INTEGER_CONSTANT 263
+#define CHARACTER_CONSTANT 264
+#define STRING_LITERAL 265
+#define PLUS 266
+#define MINUS 267
+#define PLUSPLUS 268
+#define MINUSMINUS 269
+#define AMP 270
+#define BARBAR 271
+#define AMPAMP 272
+#define ARROW 273
+#define SEMICOLON 274
+#define LSS 275
+#define GTR 276
+#define LEQ 277
+#define GEQ 278
+#define EQL 279
+#define NEQ 280
+#define DOTDOTDOT 281
+#define LP 282
+#define RP 283
+#define LB 284
+#define RB 285
+#define LR 286
+#define RR 287
+#define PERIOD 288
+#define COMMA 289
+#define EXCL 290
+#define STAR 291
+#define SLASH 292
+#define PERCENT 293
+#define ASSIGN 294
+#define COLON 295
+#define AUTO_SYM 296
+#define STATIC_SYM 297
+#define TYPEDEF_SYM 298
+#define STRUCT_SYM 299
+#define ENUM_SYM 300
+#define SIZEOF_SYM 301
+#define UNION_SYM 302
+#define IF_SYM 303
 #define WHILE_SYM 304
 #define DO_SYM 305
 #define FOR_SYM 306
@@ -157,7 +157,7 @@
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef int YYSTYPE;
+typedef long YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

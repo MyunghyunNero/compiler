@@ -1,0 +1,55 @@
+	      INT 0, 120
+	      SUP 0, main
+	      RET 0, 0
+main:
+	      INT 0, 32
+	      INT 0, 12
+	      LDA 0, 92
+	      LDA 0, 12
+	     LITI 0, 1
+	     LITI 0, 8
+	     MULI 0, 0
+	   OFFSET 0, 0
+	      LDI 0, 1
+	     LITI 0, 4
+	   OFFSET 0, 0
+	      LDI 0, 1
+	      LDA 0, 12
+	     LITI 0, 1
+	     LITI 0, 8
+	     MULI 0, 0
+	   OFFSET 0, 0
+	      LDI 0, 1
+	     LITI 0, 4
+	   OFFSET 0, 0
+	      LDX 0, 1
+	     INCI 0, 0
+	      STO 0, 1
+	      POP 0, 5
+	     ADDR 0, printf
+	      CAL 0, 0
+	      INT 0, 12
+	      LDA 0, 100
+	     LITI 0, 40
+	      POP 0, 5
+	     ADDR 0, printf
+	      CAL 0, 0
+	      INT 0, 12
+	      LDA 0, 108
+	      LOD 1, 16
+	     CVTF 0, 0
+	      LOD 0, 116
+	     ADDF 0, 0
+	     CVTI 0, 0
+	      POP 0, 5
+	     ADDR 0, printf
+	      CAL 0, 0
+	      LDA 1, -4
+	     LITI 0, 0
+	      STO 0, 1
+	      RET 0, 0
+	      RET 0, 0
+.literal    92 "%d\n"
+.literal   100 "%d\n"
+.literal   108 "%d\n"
+.literal   116 3.140000

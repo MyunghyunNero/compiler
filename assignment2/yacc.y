@@ -1,16 +1,21 @@
 %{
      #include <stdio.h>
-     int line_no = 1;
+     #include <stdlib.h>
      int yyerror(char *s);
      int yylex();
 %}
 
 %start program
 
-%token IDENTIFIER TYPE_IDENTIFIER CHARACTER_CONSTANT STRING_LITERAL FLOAT_CONSTANT INTEGER_CONSTANT ASSIGN MINUS PLUS SEMICOLON AMP
-%token PERCENT SLASH STAR EXCL COMMA PERIOD COLON RR LR RB LB RP LP DOTDOTDOT BARBAR AMPAMP NEQ EQL GEQ LEQ GTR LSS ARROW MINUSMINUS
-%token PLUSPLUS WHILE_SYM UNION_SYM TYPEDEF_SYM SWITCH_SYM STRUCT_SYM STATIC_SYM SIZEOF_SYM RETURN_SYM IF_SYM FOR_SYM ENUM_SYM ELSE_SYM
-%token DO_SYM DEFAULT_SYM CONTINUE_SYM CASE_SYM BREAK_SYM AUTO_SYM
+%token IDENTIFIER TYPE_IDENTIFIER FLOAT_CONSTANT INTEGER_CONSTANT 
+       CHARACTER_CONSTANT STRING_LITERAL MINUS PLUS PLUSPLUS 
+       MINUSMINUS BAR AMP BARBAR AMPAMP ARROW 
+       SEMICOLON LSS GTR LEQ GEQ EQL NEQ DOTDOTDOT
+       LP RP LB RB LR RR PERIOD COMMA EXCL STAR SLASH PERCENT ASSIGN
+       COLON AUTO_SYM STATIC_SYM TYPEDEF_SYM
+       STRUCT_SYM ENUM_SYM SIZEOF_SYM UNION_SYM
+       IF_SYM ELSE_SYM WHILE_SYM DO_SYM FOR_SYM CONTINUE_SYM
+       BREAK_SYM RETURN_SYM SWITCH_SYM CASE_SYM DEFAULT_SYM
 
 %%
 program
@@ -108,7 +113,7 @@ enumerator_list
 
 enumerator
      : IDENTIFIER
-     | IDENTIFIER ASSIGN constant_expression SEMICOLON
+     | IDENTIFIER ASSIGN constant_expression
      ;
 
 declarator
@@ -334,24 +339,27 @@ expression
      ;
 
 assignment_expression
-     : logical_or_expression
+     : conditional_expresstion
      | unary_expression ASSIGN assignment_expression
      ;
+
+conditional_expresstion
+     : logical_or_expression
+     ;
+
+
 %%
 extern char *yytext;
 
 int yyerror(char *s) 
 {
-     printf("line %d: %s near %s \n", line_no, s, yytext);
+     printf("%s near %s \n", s, yytext);
+     exit(1);
 }
 
 int main()
 {
      yyparse();
-     printf("프로그램 종료\n");
+     printf("검사 완료\n");
 }
 
-int yywrap()
-{
-     return(1);
-}

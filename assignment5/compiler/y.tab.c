@@ -43,56 +43,24 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
+/* Identify Bison output.  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>  // 이거 없으면 strlen 같은 함수 인식 못해서 에러-> 추가해줘서 해결
 #include "type.h"
 #include "y.tab.h"
-extern char *yytext;
-A_TYPE *int_type, *char_type, *void_type, *float_type, *string_type;
-A_NODE *root;
-A_ID *current_id=NIL;
-int syntax_err=0;
-int line_no=1;
-int current_level=0;
-A_NODE *makeNode (NODE_NAME,A_NODE *,A_NODE *,A_NODE *);
-A_NODE *makeNodeList (NODE_NAME,A_NODE *,A_NODE *);
-A_ID *makeIdentifier(char *);
-A_ID *makeDummyIdentifier();
-A_TYPE *makeType(T_KIND);
-A_SPECIFIER *makeSpecifier(A_TYPE *,S_KIND);
-A_ID *searchIdentifier(char *,A_ID *);
-A_ID *searchIdentifierAtCurrentLevel(char *,A_ID *);
-A_SPECIFIER *updateSpecifier(A_SPECIFIER *, A_TYPE *, S_KIND);
-void checkForwardReference();
-void setDefaultSpecifier(A_SPECIFIER *);
-A_ID *linkDeclaratorList(A_ID *,A_ID *) ;
-A_ID *getIdentifierDeclared(char *);
-A_TYPE *getTypeOfStructOrEnumRefIdentifier(T_KIND,char *,ID_KIND);
-A_ID *setDeclaratorInit(A_ID *,A_NODE *);
-A_ID *setDeclaratorKind(A_ID *,ID_KIND);
-A_ID *setDeclaratorType(A_ID *,A_TYPE *);
-A_ID *setDeclaratorElementType(A_ID *,A_TYPE *);
-A_ID *setDeclaratorTypeAndKind(A_ID *,A_TYPE *,ID_KIND);
-A_ID *setDeclaratorListSpecifier(A_ID *,A_SPECIFIER *);
-A_ID *setFunctionDeclaratorSpecifier(A_ID *, A_SPECIFIER *);
-A_ID *setFunctionDeclaratorBody(A_ID *, A_NODE *);
-A_ID *setParameterDeclaratorSpecifier(A_ID *, A_SPECIFIER *);
-A_ID *setStructDeclaratorListSpecifier(A_ID *, A_TYPE *);
-A_TYPE*setTypeNameSpecifier(A_TYPE *, A_SPECIFIER *);
-A_TYPE *setTypeElementType(A_TYPE *,A_TYPE *);
-A_TYPE *setTypeField(A_TYPE *,A_ID *);
-A_TYPE *setTypeExpr(A_TYPE *,A_NODE *);
-A_TYPE *setTypeAndKindOfDeclarator(A_TYPE *,ID_KIND,A_ID *);
-A_TYPE *setTypeStructOrEnumIdentifier(T_KIND,char *,ID_KIND);
-BOOLEAN isNotSameFormalParameters(A_ID *, A_ID *);
-BOOLEAN isNotSameType(A_TYPE *, A_TYPE *);
-BOOLEAN isPointerOrArrayType(A_TYPE *);
-void syntax_error();
-void initialize();
+
+char *node_name[] = {
+    "N_NULL", "N_PROGRAM", "N_EXP_IDENT", "N_EXP_INT_CONST", "N_EXP_FLOAT_CONST", "N_EXP_CHAR_CONST", "N_EXP_STRING_LITERAL",
+    "N_EXP_ARRAY", "N_EXP_FUNCTION_CALL", "N_EXP_STRUCT", "N_EXP_ARROW", "N_EXP_POST_INC", "N_EXP_POST_DEC", "N_EXP_PRE_INC", "N_EXP_PRE_DEC", "N_EXP_AMP", "N_EXP_STAR", "N_EXP_NOT", "N_EXP_PLUS", "N_EXP_MINUS", "N_EXP_SIZE_EXP", "N_EXP_SIZE_TYPE", "N_EXP_CAST", "N_EXP_MUL", "N_EXP_DIV", "N_EXP_MOD", "N_EXP_ADD", "N_EXP_SUB",
+    "N_EXP_LSS",
+    "N_EXP_GTR",
+    "N_EXP_LEQ", "N_EXP_GEQ", "N_EXP_NEQ", "N_EXP_EQL", "N_EXP_AND",
+    "N_EXP_OR", "N_EXP_ASSIGN", "N_ARG_LIST", "N_ARG_LIST_NIL", "N_STMT_LABEL_CASE", "N_STMT_LABEL_DEFAULT",
+    "N_STMT_COMPOUND", "N_STMT_EMPTY", "N_STMT_EXPRESSION", "N_STMT_IF", "N_STMT_IF_ELSE", "N_STMT_SWITCH", "N_STMT_WHILE", "N_STMT_DO", "N_STMT_FOR", "N_STMT_RETURN", "N_STMT_CONTINUE", "N_STMT_BREAK", "N_FOR_EXP", "N_STMT_LIST", "N_STMT_LIST_NIL", "N_INIT_LIST", "N_INIT_LIST_ONE", "N_INIT_LIST_NIL"};
+
 void print_ast(A_NODE *);
 void prt_program(A_NODE *, int);
-
 void prt_initializer(A_NODE *, int);
 void prt_arg_expr_list(A_NODE *, int);
 void prt_statement(A_NODE *, int);
@@ -105,19 +73,898 @@ void prt_A_ID(A_ID *, int);
 void prt_A_ID_NAME(A_ID *, int);
 void prt_STRING(char *, int);
 void prt_integer(int, int);
-
-void print_node(A_NODE *,int);
+void print_node(A_NODE *, int);
 void print_space(int);
+
+void print_sem_ast(A_NODE *);
+void prt_sem_program(A_NODE *, int);
+
+void prt_sem_initializer(A_NODE *, int);
+void prt_sem_arg_expr_list(A_NODE *, int);
+void prt_sem_statement(A_NODE *, int);
+void prt_sem_statement_list(A_NODE *, int);
+void prt_sem_for_expression(A_NODE *, int);
+void prt_sem_expression(A_NODE *, int);
+void prt_sem_A_TYPE(A_TYPE *, int);
+void prt_sem_A_ID_LIST(A_ID *, int);
+void prt_sem_A_ID(A_ID *, int);
+void prt_sem_A_ID_NAME(A_ID *, int);
+void prt_sem_LITERAL(int, int);
+void prt_sem_integer(int, int);
 
 
 #define LIT_MAX 100
 
-extern A_TYPE *int_type, *float_type, *char_type, *string_type, *void_type;
 int global_address = 12;
 int semantic_err = 0;
 A_LITERAL literal_table[LIT_MAX];
 int literal_no = 0;
 int literal_size = 0;
+//float atof(); // in main, already stdlib.h was called
+void semantic_analysis(A_NODE *);
+void set_literal_address(A_NODE *);
+int put_literal(A_LITERAL, int);
+void sem_program(A_NODE *);
+A_TYPE*sem_expression(A_NODE *);
+int sem_statement(A_NODE *, int, A_TYPE *, BOOLEAN, BOOLEAN, BOOLEAN);
+int sem_statement_list(A_NODE *, int, A_TYPE *, BOOLEAN, BOOLEAN, BOOLEAN);
+void sem_for_expression(A_NODE *);
+int sem_A_TYPE(A_TYPE *) ;
+int sem_declaration_list(A_ID *id, int addr);
+int sem_declaration(A_ID *,int);
+void sem_arg_expr_list(A_NODE *, A_ID *);
+A_ID *getStructFieldIdentifier(A_TYPE *, char *);
+A_ID *getPointerFieldIdentifier(A_TYPE *, char *);
+A_NODE *convertScalarToInteger(A_NODE *);
+A_NODE *convertUsualAssignmentConversion(A_TYPE *, A_NODE *);
+A_NODE *convertUsualUnaryConversion(A_NODE *);
+A_TYPE *convertUsualBinaryConversion(A_NODE *);
+A_NODE *convertCastingConversion(A_NODE *,A_TYPE *);
+BOOLEAN isAllowableAssignmentConversion(A_TYPE *, A_TYPE *, A_NODE *); 
+BOOLEAN isAllowableCastingConversion(A_TYPE *, A_TYPE *);
+BOOLEAN isModifiableLvalue(A_NODE *);
+BOOLEAN isConstantZeroExp(A_NODE *);
+BOOLEAN isSameParameterType(A_ID *, A_ID *);
+BOOLEAN isNotSameType(A_TYPE *, A_TYPE *);
+BOOLEAN isCompatibleType(A_TYPE *, A_TYPE *);
+BOOLEAN isCompatiblePointerType(A_TYPE *, A_TYPE *);
+BOOLEAN isIntType(A_TYPE *);
+BOOLEAN isFloatType(A_TYPE *);
+BOOLEAN isArithmeticType(A_TYPE *);
+BOOLEAN isAnyIntegerType(A_TYPE *);
+BOOLEAN isIntegralType(A_TYPE *);
+BOOLEAN isStructOrUnionType(A_TYPE *);
+BOOLEAN isFunctionType(A_TYPE *);
+BOOLEAN isScalarType(A_TYPE *);
+BOOLEAN isPointerType(A_TYPE *);
+BOOLEAN isPointerOrArrayType_sem(A_TYPE *);
+BOOLEAN isArrayType(A_TYPE *);
+BOOLEAN isStringType(A_TYPE *);
+BOOLEAN isVoidType(A_TYPE *);
+A_LITERAL checkTypeAndConvertLiteral(A_LITERAL,A_TYPE*, int);
+A_LITERAL getTypeAndValueOfExpression(A_NODE *);
+A_TYPE *makeType(T_KIND);
+void setTypeSize(A_TYPE *, int);
+void semantic_warning(int, int);
+void semantic_error();
+
+extern char *yytext;
+
+A_TYPE *int_type, *char_type, *void_type, *float_type, *string_type;
+A_NODE *root;
+A_ID *current_id = NIL;
+int syntax_err = 0;
+int line_no = 1;
+int current_level = 0;
+A_NODE *makeNode(NODE_NAME, A_NODE *, A_NODE *, A_NODE *);
+A_NODE *makeNodeList(NODE_NAME, A_NODE *, A_NODE *);
+A_ID *makeIdentifier(char *);
+A_ID *makeDummyIdentifier();
+A_TYPE *makeType(T_KIND);
+A_SPECIFIER *makeSpecifier(A_TYPE *, S_KIND);
+A_ID *searchIdentifier(char *, A_ID *);
+A_ID *searchIdentifierAtCurrentLevel(char *, A_ID *);
+A_SPECIFIER *updateSpecifier(A_SPECIFIER *, A_TYPE *, S_KIND);
+void checkForwardReference();
+void setDefaultSpecifier(A_SPECIFIER *);
+A_ID *linkDeclaratorList(A_ID *, A_ID *);
+A_ID *getIdentifierDeclared(char *);
+A_TYPE *getTypeOfStructOrEnumRefIdentifier(T_KIND, char *, ID_KIND);
+A_ID *setDeclaratorInit(A_ID *, A_NODE *);
+A_ID *setDeclaratorKind(A_ID *, ID_KIND);
+A_ID *setDeclaratorType(A_ID *, A_TYPE *);
+A_ID *setDeclaratorElementType(A_ID *, A_TYPE *);
+A_ID *setDeclaratorTypeAndKind(A_ID *, A_TYPE *, ID_KIND);
+A_ID *setDeclaratorListSpecifier(A_ID *, A_SPECIFIER *);
+A_ID *setFunctionDeclaratorSpecifier(A_ID *, A_SPECIFIER *);
+A_ID *setFunctionDeclaratorBody(A_ID *, A_NODE *);
+A_ID *setParameterDeclaratorSpecifier(A_ID *, A_SPECIFIER *);
+A_ID *setStructDeclaratorListSpecifier(A_ID *, A_TYPE *);
+A_TYPE *setTypeNameSpecifier(A_TYPE *, A_SPECIFIER *);
+A_TYPE *setTypeElementType(A_TYPE *, A_TYPE *);
+A_TYPE *setTypeField(A_TYPE *, A_ID *);
+A_TYPE *setTypeExpr(A_TYPE *, A_NODE *);
+A_TYPE *setTypeAndKindOfDeclarator(A_TYPE *, ID_KIND, A_ID *);
+A_TYPE *setTypeStructOrEnumIdentifier(T_KIND, char *, ID_KIND);
+BOOLEAN isNotSameFormalParameters(A_ID *, A_ID *);
+BOOLEAN isNotSameType(A_TYPE *, A_TYPE *);
+BOOLEAN isPointerOrArrayType(A_TYPE *);
+
+void syntax_error(int, char *);
+void initialize();
+
+char *id_kind_name[] = {"NULL", "VAR", "FUNC", "PARM", "FIELD", "TYPE", "ENUM", "STRUCT", "ENUM_LITERAL"};
+char *spec_name[] = {"NULL", "AUTO", "STATIC", "TYPEDEF"};
+
+typedef enum op {
+    OP_NULL,
+    LOD,
+    LDX,
+    LDXB,
+    LDA,
+    LITI,
+    STO,
+    STOB,
+    STX,
+    STXB,
+    SUBI,
+    SUBF,
+    DIVI,
+    DIVF,
+    ADDI,
+    ADDF,
+    OFFSET,
+    MULI,
+    MULF,
+    MOD,
+    LSSI,
+    LSSF,
+    GTRI,
+    GTRF,
+    LEQI,
+    LEQF,
+    GEQI,
+    GEQF,
+    NEQI,
+    NEQF,
+    EQLI,
+    EQLF,
+    NOT,
+    OR,
+    AND,
+    CVTI,
+    CVTF,
+    JPC,
+    JPCR,
+    JMP,
+    JPT,
+    JPTR,
+    INT,
+    INCI,
+    INCF,
+    DECI,
+    DECF,
+    SUP,
+    CAL,
+    ADDR,
+    RET,
+    MINUSI,
+    MINUSF,
+    CHK,
+    LDI,
+    LDIB,
+    SWITCH,
+    SWVALUE,
+    SWDEFAULT,
+    SWLABEL,
+    SWEND,
+    POP,
+    POPB
+} OPCODE;
+
+typedef enum {
+    SW_VALUE, SW_DEFAULT
+} SW_KIND;
+
+typedef struct sw {
+    SW_KIND kind;
+    int val;
+    int label;
+} A_SWITCH;
+
+void code_generation(A_NODE *);
+
+void gen_literal_table();
+
+void gen_program(A_NODE *);
+
+void gen_global_init_list(A_ID *);
+
+void gen_expression(A_NODE *);
+
+void gen_expression_left(A_NODE *);
+
+void gen_arg_expression(A_NODE *);
+
+void gen_statement(A_NODE *, int, int, A_SWITCH [], int *);
+
+void gen_statement_list(A_NODE *, int, int, A_SWITCH [], int *);
+
+void gen_initializer_global(A_NODE *, A_TYPE *, int);
+
+void gen_initializer_local(A_NODE *, A_TYPE *, int);
+
+void gen_declaration_list(A_ID *);
+
+void gen_declaration(A_ID *);
+
+void gen_code_i(OPCODE, int, int);
+
+void gen_code_f(OPCODE, int, float);
+
+void gen_code_s(OPCODE, int, char *);
+
+void gen_code_l(OPCODE, int, int);
+
+void gen_label_number(int);
+
+void gen_label_name(char *);
+
+void gen_error(int i, int ll, char *s);
+
+int get_label();
+
+
+char *opcode_name[] = {
+        "OP_NULL",
+        "LOD",
+        "LDX",
+        "LDXB",
+        "LDA",
+        "LITI",
+        "STO",
+        "STOB",
+        "STX",
+        "STXB",
+        "SUBI",
+        "SUBF",
+        "DIVI",
+        "DIVF",
+        "ADDI",
+        "ADDF",
+        "OFFSET",
+        "MULI",
+        "MULF",
+        "MOD",
+        "LSSI",
+        "LSSF",
+        "GTRI",
+        "GTRF",
+        "LEQI",
+        "LEQF",
+        "GEQI",
+        "GEQF",
+        "NEQI",
+        "NEQF",
+        "EQLI",
+        "EQLF",
+        "NOT",
+        "OR",
+        "AND",
+        "CVTI",
+        "CVTF",
+        "JPC",
+        "JPCR",
+        "JMP",
+        "JPT",
+        "JPTR",
+        "INT",
+        "INCI",
+        "INCF",
+        "DECI",
+        "DECF",
+        "SUP",
+        "CAL",
+        "ADDR",
+        "RET",
+        "MINUSI",
+        "MINUSF",
+        "CHK",
+        "LDI",
+        "LDIB",
+        "SWITCH",
+        "SWVALUE",
+        "SWDEFAULT",
+        "SWLABEL",
+        "SWEND",
+        "POP",
+        "POPB"
+};
+
+int label_no = 0;
+int gen_err = 0;
+FILE *fout;
+A_TYPE *int_type, *float_type, *char_type, *void_type, *string_type;
+A_LITERAL literal_table[];
+int literal_no;
+// make new node for syntax tree
+A_NODE *makeNode(NODE_NAME n, A_NODE *a, A_NODE *b, A_NODE *c)
+{
+    A_NODE *m;
+    m = (A_NODE *)malloc(sizeof(A_NODE));
+    m->name = n;
+    m->llink = a;
+    m->clink = b;
+    m->rlink = c;
+    m->type = NIL;
+    m->line = line_no;
+    m->value = 0;
+    return m;
+}
+
+A_NODE *makeNodeList(NODE_NAME n, A_NODE *a, A_NODE *b)
+{
+    A_NODE *m, *k;
+    k = a;
+    while (k->rlink)
+        k = k->rlink;
+
+    m = (A_NODE *)malloc(sizeof(A_NODE));
+    m->name = k->name;
+    m->llink = NIL;
+    m->clink = NIL;
+    m->rlink = NIL;
+    m->type = NIL;
+    m->line = line_no;
+    m->value = 0;
+    k->name = n;
+    k->llink = b;
+    k->rlink = m;
+    return a;
+}
+
+// make new declarator for identifier
+A_ID *makeIdentifier(char *s)
+{
+    A_ID *id;
+    id = malloc(sizeof(A_ID));
+    id->name = s;
+    id->kind = 0;
+    id->specifier = 0;
+    id->level = current_level;
+    id->address = 0;
+    id->init = NIL;
+    id->type = NIL;
+    id->link = NIL;
+    id->line = line_no;
+    id->value = 0;
+    id->prev = current_id;
+    current_id = id;
+    return id;
+}
+
+// make new declarator for dummy identifier
+A_ID *makeDummyIdentifier()
+{
+    A_ID *id;
+    id = malloc(sizeof(A_ID));
+    id->name = "";
+    id->kind = 0;
+    id->specifier = 0;
+    id->level = current_level;
+    id->address = 0;
+    id->init = NIL;
+    id->type = NIL;
+    id->link = NIL;
+    id->line = line_no;
+    id->value = 0;
+    id->prev = 0;
+    return id;
+}
+
+// make new type
+A_TYPE *makeType(T_KIND k)
+{
+    A_TYPE *t;
+    t = malloc(sizeof(A_TYPE));
+    t->kind = k;
+    t->size = 0;
+    t->local_var_size = 0;
+    t->element_type = NIL;
+    t->field = NIL;
+    t->expr = NIL;
+    t->check = FALSE;
+    t->prt = FALSE;
+    t->line = line_no;
+    return t;
+}
+
+// make new specifier
+A_SPECIFIER *makeSpecifier(A_TYPE *t, S_KIND s)
+{
+    A_SPECIFIER *p;
+    p = malloc(sizeof(A_SPECIFIER));
+    p->type = t;
+    p->stor = s;
+    p->line = line_no;
+    return p;
+}
+
+A_ID *searchIdentifier(char *s, A_ID *id)
+{
+    while (id)
+    {
+        if (strcmp(id->name, s) == 0)
+            break;
+        id = id->prev;
+    }
+    return id;
+}
+
+A_ID *searchIdentifierAtCurrentLevel(char *s, A_ID *id)
+{
+    while (id)
+    {
+        if (id->level < current_level)
+            return NIL;
+        if (strcmp(id->name, s) == 0)
+            break;
+        id = id->prev;
+    }
+    return id;
+}
+
+void checkForwardReference()
+{
+    A_ID *id;
+    A_TYPE *t;
+    id = current_id;
+    while (id)
+    {
+        if (id->level < current_level)
+            break;
+        t = id->type;
+
+        if (id->kind == ID_NULL)
+            syntax_error(31, id->name);
+        else if ((id->kind == ID_STRUCT || id->kind == ID_ENUM) && t->field == NIL)
+            syntax_error(32, id->name);
+        id = id->prev;
+    }
+}
+
+// set default specifier
+void setDefaultSpecifier(A_SPECIFIER *p)
+{
+    A_TYPE *t;
+    if (p->type == NIL)
+        p->type = int_type;
+    if (p->stor == S_NULL)
+        p->stor = S_AUTO;
+}
+
+// specifier merge & update
+A_SPECIFIER *updateSpecifier(A_SPECIFIER *p, A_TYPE *t, S_KIND s)
+{
+    if (t)
+        if (p->type)
+            if (p->type == t)
+                ;
+            else
+                syntax_error(24, "");
+        else
+            p->type = t;
+
+    if (s)
+    {
+        if (p->stor)
+            if (s == p->stor)
+                ;
+            else
+                syntax_error(24, "");
+        else
+            p->stor = s;
+    }
+    return p;
+}
+
+// link two declaraor list id1 & id2
+A_ID *linkDeclaratorList(A_ID *id1, A_ID *id2)
+{
+    A_ID *m = id1;
+    if (id1 == NIL)
+        return id2;
+    while (m->link)
+        m = m->link;
+    m->link = id2;
+    return id1;
+}
+
+// check if identifier is already declared in primary expression
+A_ID *getIdentifierDeclared(char *s)
+{
+    A_ID *id;
+    id = searchIdentifier(s, current_id);
+    if (id == NIL)
+        syntax_error(13, s);
+    return id;
+}
+
+// get type of struct id
+A_TYPE *getTypeOfStructOrEnumRefIdentifier(T_KIND k, char *s, ID_KIND kk)
+{
+    A_TYPE *t;
+    A_ID *id;
+    id = searchIdentifier(s, current_id);
+    if (id)
+        if (id->kind == kk && id->type->kind == k)
+            return id->type;
+        else
+            syntax_error(11, s);
+    // make a new struct (or enum) identifier
+    t = makeType(k);
+    id = makeIdentifier(s);
+    id->kind = kk;
+    id->type = t;
+    return t;
+}
+
+// set declarator init (expression tree)
+A_ID *setDeclaratorInit(A_ID *id, A_NODE *n)
+{
+    id->init = n;
+    return id;
+}
+
+// set declarator kind
+A_ID *setDeclaratorKind(A_ID *id, ID_KIND k)
+{
+    A_ID *a;
+    a = searchIdentifierAtCurrentLevel(id->name, id->prev);
+    if (a)
+        syntax_error(12, id->name);
+    id->kind = k;
+    return id;
+}
+
+// set declarator type
+A_ID *setDeclaratorType(A_ID *id, A_TYPE *t)
+{
+    id->type = t;
+    return id;
+}
+
+// set declarator type (or element type)
+A_ID *setDeclaratorElementType(A_ID *id, A_TYPE *t)
+{
+    A_TYPE *tt;
+    if (id->type == NIL)
+        id->type = t;
+    else
+    {
+        tt = id->type;
+        while (tt->element_type)
+            tt = tt->element_type;
+        tt->element_type = t;
+    }
+    return id;
+}
+
+// set declarator element type and kind
+A_ID *setDeclaratorTypeAndKind(A_ID *id, A_TYPE *t, ID_KIND k)
+{
+    id = setDeclaratorElementType(id, t);
+    id = setDeclaratorKind(id, k);
+    return id;
+}
+
+// check function declarator and return type
+A_ID *setFunctionDeclaratorSpecifier(A_ID *id, A_SPECIFIER *p)
+{
+    A_ID *a;
+    // check storage class
+    if (p->stor)
+        syntax_error(25, "");
+    setDefaultSpecifier(p);
+    // check function identifier immediately before '('
+    if (id->type->kind != T_FUNC)
+    {
+        syntax_error(21, "");
+        return id;
+    }
+    else
+    {
+        id = setDeclaratorElementType(id, p->type);
+        id->kind = ID_FUNC;
+    }
+    // check redeclaration
+    a = searchIdentifierAtCurrentLevel(id->name, id->prev);
+    if (a)
+        if (a->kind != ID_FUNC || a->type->expr)
+            syntax_error(12, id->name);
+        else
+        { // check prototype: parameters and return type
+            if (isNotSameFormalParameters(a->type->field, id->type->field))
+                syntax_error(22, id->name);
+            if (isNotSameType(a->type->element_type, id->type->element_type))
+                syntax_error(26, a->name);
+        }
+    // change parameter scope and check empty name
+    a = id->type->field;
+    while (a)
+    {
+        if (strlen(a->name))
+            current_id = a;
+        else if (a->type)
+            syntax_error(23, "");
+        a = a->link;
+    }
+    return id;
+}
+
+A_ID *setFunctionDeclaratorBody(A_ID *id, A_NODE *n)
+{
+    id->type->expr = n;
+    return id;
+}
+
+// set declarator_list type and kind based on storage class
+A_ID *setDeclaratorListSpecifier(A_ID *id, A_SPECIFIER *p)
+{
+    A_ID *a;
+    setDefaultSpecifier(p);
+    a = id;
+    while (a)
+    {
+        if (strlen(a->name) && searchIdentifierAtCurrentLevel(a->name, a->prev))
+            syntax_error(12, a->name);
+        // ** to be completed ** -> completed
+        a = setDeclaratorElementType(a, p->type);
+        if (p->stor == S_TYPEDEF)
+            a->kind = ID_TYPE;
+        else if (a->type->kind == T_FUNC)
+            a->kind = ID_FUNC;
+        else
+            a->kind = ID_VAR;
+        a->specifier = p->stor; // id's specifier should be storage class of A_SPECIFIER's stor
+        if (a->specifier == S_NULL)
+            a->specifier = S_AUTO;
+        a = a->link;
+    }
+    return id;
+}
+
+// set declarator_list type and kind
+A_ID *setParameterDeclaratorSpecifier(A_ID *id, A_SPECIFIER *p)
+{
+    // check redeclaration
+    if (searchIdentifierAtCurrentLevel(id->name, id->prev))
+        syntax_error(12, id->name);
+    // check papameter storage class && void type
+    if (p->stor || p->type == void_type)
+        syntax_error(14, "");
+    setDefaultSpecifier(p);
+    id = setDeclaratorElementType(id, p->type);
+    id->kind = ID_PARM;
+    return id;
+}
+
+A_ID *setStructDeclaratorListSpecifier(A_ID *id, A_TYPE *t)
+{
+    A_ID *a;
+    a = id;
+    while (a)
+    {
+        // ** to be completed ** -> completed
+        if (searchIdentifierAtCurrentLevel(a->name, a->prev))
+            syntax_error(12, a->name);
+        a = setDeclaratorElementType(a, t);
+        a->kind = ID_FIELD;
+        a = a->link;
+    }
+    return id;
+}
+
+// set type name specifier
+A_TYPE *setTypeNameSpecifier(A_TYPE *t, A_SPECIFIER *p)
+{
+    // check storage class in type name
+    if (p->stor)
+        syntax_error(20, "");
+    setDefaultSpecifier(p);
+    t = setTypeElementType(t, p->type);
+    return t;
+}
+
+// set type element type
+A_TYPE *setTypeElementType(A_TYPE *t, A_TYPE *s)
+{
+    A_TYPE *q;
+    if (t == NIL)
+        return s;
+    q = t;
+    while (q->element_type)
+        q = q->element_type;
+    q->element_type = s;
+    return t;
+}
+
+// set type field
+A_TYPE *setTypeField(A_TYPE *t, A_ID *n)
+{
+    t->field = n;
+    return t;
+}
+// set type initial value (expression tree)
+A_TYPE *setTypeExpr(A_TYPE *t, A_NODE *n)
+{
+    t->expr = n;
+    return t;
+}
+// set type of struct iIdentifier
+A_TYPE *setTypeStructOrEnumIdentifier(T_KIND k, char *s, ID_KIND kk)
+{
+    A_TYPE *t;
+    A_ID *id, *a;
+    // check redeclaration or forward declaration
+    a = searchIdentifierAtCurrentLevel(s, current_id);
+    if (a)
+        if (a->kind == kk && a->type->kind == k)
+            if (a->type->field)
+                syntax_error(12, s);
+            else
+                return a->type;
+        else
+            syntax_error(12, s);
+    // make a new struct (or enum) identifier
+    id = makeIdentifier(s);
+    t = makeType(k);
+    id->type = t;
+    id->kind = kk;
+    return t;
+}
+// set type and kinf of identifier
+A_TYPE *setTypeAndKindOfDeclarator(A_TYPE *t, ID_KIND k, A_ID *id)
+{
+    if (searchIdentifierAtCurrentLevel(id->name, id->prev))
+        syntax_error(12, id->name);
+    id->type = t;
+    id->kind = k;
+    return t;
+}
+// check function parameters with protype
+BOOLEAN isNotSameFormalParameters(A_ID *a, A_ID *b)
+{
+    if (a == NIL) // no parameters in prototype
+        return FALSE;
+    while (a)
+    {
+        if (b == NIL || isNotSameType(a->type, b->type))
+            return TRUE;
+        a = a->link;
+        b = b->link;
+    }
+    if (b)
+        return TRUE;
+    else
+        return FALSE;
+}
+
+BOOLEAN isNotSameType(A_TYPE *t1, A_TYPE *t2)
+{
+    if (isPointerOrArrayType(t1) || isPointerOrArrayType(t2))
+        return isNotSameType(t1->element_type, t2->element_type);
+    else
+        return t1 != t2;
+}
+
+BOOLEAN isPointerOrArrayType(A_TYPE *t)
+{
+    return t && (t->kind == T_POINTER || t->kind == T_ARRAY);
+}
+
+void initialize()
+{
+    // primitive data types
+    int_type = setTypeAndKindOfDeclarator(
+        makeType(T_ENUM), ID_TYPE, makeIdentifier("int"));
+    float_type = setTypeAndKindOfDeclarator(
+        makeType(T_ENUM), ID_TYPE, makeIdentifier("float"));
+    char_type = setTypeAndKindOfDeclarator(
+        makeType(T_ENUM), ID_TYPE, makeIdentifier("char"));
+    void_type = setTypeAndKindOfDeclarator(
+        makeType(T_VOID), ID_TYPE, makeIdentifier("void"));
+    string_type = setTypeElementType(makeType(T_POINTER), char_type);
+    int_type->size = 4;
+    int_type->check = TRUE;
+    float_type->size = 4;
+    float_type->check = TRUE;
+    char_type->size = 1;
+    char_type->check = TRUE;
+    void_type->size = 0;
+    void_type->check = TRUE;
+    string_type->size = 4;
+    string_type->check = TRUE;
+    // printf(char *, ...) library function
+    setDeclaratorTypeAndKind(
+        makeIdentifier("printf"),
+        setTypeField(
+            setTypeElementType(makeType(T_FUNC), void_type),
+            linkDeclaratorList(
+                setDeclaratorTypeAndKind(makeDummyIdentifier(), string_type, ID_PARM),
+                setDeclaratorKind(makeDummyIdentifier(), ID_PARM))),
+        ID_FUNC);
+    // scanf(char *, ...) library function
+    setDeclaratorTypeAndKind(
+        makeIdentifier("scanf"),
+        setTypeField(
+            setTypeElementType(makeType(T_FUNC), void_type),
+            linkDeclaratorList(
+                setDeclaratorTypeAndKind(makeDummyIdentifier(), string_type, ID_PARM),
+                setDeclaratorKind(makeDummyIdentifier(), ID_PARM))),
+        ID_FUNC);
+    // malloc(int) library function
+    setDeclaratorTypeAndKind(
+        makeIdentifier("malloc"),
+        setTypeField(
+            setTypeElementType(makeType(T_FUNC), string_type),
+            setDeclaratorTypeAndKind(makeDummyIdentifier(), int_type, ID_PARM)),
+        ID_FUNC);
+}
+void syntax_error(int i, char *s)
+{
+    syntax_err++;
+    printf("line %d: syntax error: ", line_no);
+    switch (i)
+    {
+    case 11:
+        printf("illegal referencing struct or union identifier %s", s);
+        break;
+    case 12:
+        printf("redeclaration of identifier %s", s);
+        break;
+    case 13:
+        printf("undefined identifier %s", s);
+        break;
+    case 14:
+        printf("illegal type specifier in formal parameter");
+        break;
+    case 20:
+        printf("illegal storage class in type specifiers");
+        break;
+    case 21:
+        printf("illegal function declarator");
+        break;
+    case 22:
+        printf("conflicting parm type in prototype function %s", s);
+        break;
+    case 23:
+        printf("empty parameter name");
+        break;
+    case 24:
+        printf("illegal declaration specifiers");
+        break;
+    case 25:
+        printf("illegal function specifiers");
+        break;
+    case 26:
+        printf("illegal or conflicting return type in function %s", s);
+        break;
+    case 31:
+        printf("undefined type for identifier %s", s);
+        break;
+    case 32:
+        printf("incomplete forward reference for identifier %s", s);
+        break;
+    default:
+        printf("unknown");
+        break;
+    }
+    if (strlen(yytext) == 0)
+        printf(" at end\n");
+    else
+        printf(" near %s\n", yytext);
+}
 
 void semantic_analysis(A_NODE *node)
 {
@@ -1568,641 +2415,39 @@ void semantic_warning(int i, int ll)
         break;
     }
 }
-extern A_TYPE *int_type, *float_type, *char_type, *void_type, *string_type;
-// make new node for syntax tree
-A_NODE *makeNode (NODE_NAME n, A_NODE *a, A_NODE *b, A_NODE *c)
-{
-	A_NODE *m;
-	m = (A_NODE*)malloc(sizeof(A_NODE));
-	m->name=n;
-	m->llink=a;
-	m->clink=b;
-	m->rlink=c;
-	m->type=NIL;
-	m->line=line_no;
-	m->value=0;
-	return (m);
-}
-A_NODE *makeNodeList (NODE_NAME n, A_NODE *a, A_NODE *b)
-{
-	A_NODE *m,*k;
-	k=a;
-	while (k->rlink)
-		k=k->rlink;
-	m = (A_NODE*)malloc(sizeof(A_NODE));
-	m->name=k->name;
-	m->llink=NIL;
-	m->clink=NIL;
-	m->rlink=NIL;
-	m->type=NIL;
-	m->line=line_no;
-	m->value=0;
-	k->name=n;
-	k->llink=b;
-	k->rlink=m;
-	return(a);
-}
-// make new declarator for identifier
-A_ID *makeIdentifier(char *s)
-{
-	A_ID *id;
-	id = malloc(sizeof(A_ID));
-	id->name = s;
-	id->kind = 0;
-	id->specifier = 0;
-	id->level = current_level;
-	id->address = 0;
-	id->init = NIL;
-	id->type = NIL;
-	id->link = NIL;
-	id->line = line_no;
-	id->value=0;
-	id->prev = current_id;
-	current_id=id;
-	return(id);
-}
-// make new declarator for dummy identifier
-A_ID *makeDummyIdentifier()
-{
-	A_ID *id;
-	id = malloc(sizeof(A_ID));
-	id->name = "";
-	id->kind = 0;
-	id->specifier = 0;
-	id->level = current_level;
-	id->address = 0;
-	id->init = NIL;
-	id->type = NIL;
-	id->link = NIL;
-	id->line = line_no;
-	id->value=0;
-	id->prev =0;
-	return(id);
-}
-// make new type
-A_TYPE *makeType(T_KIND k)
-{
-	A_TYPE *t;
-	t = malloc(sizeof(A_TYPE));
-	t->kind = k;
-	t->size=0;
-	t->local_var_size=0;
-	t->element_type = NIL;
-	t->field = NIL;
-	t->expr = NIL;
-	t->check=FALSE;
-	t->prt=FALSE;
-	t->line=line_no;
-	return(t);
-}
-// make new specifier
-A_SPECIFIER *makeSpecifier(A_TYPE *t,S_KIND s)
-{
-	A_SPECIFIER *p;
-	p = malloc(sizeof(A_SPECIFIER));
-	p->type = t;
-	p->stor=s;
-	p->line=line_no;
-	return(p);
-}
-A_ID *searchIdentifier(char *s, A_ID *id)
-{
-	while (id) {
-		if (strcmp(id->name,s)==0)
-			break;
-		id=id->prev;
-	}
-	return(id);
-}
-A_ID *searchIdentifierAtCurrentLevel(char *s,A_ID *id)
-{
-	while (id) {
-		if (id->level<current_level)
-			return(NIL);
-		if (strcmp(id->name,s)==0)
-			break;
-		id=id->prev;
-	}
-	return(id);
-}
-void checkForwardReference()
-{
-	A_ID *id;
-	A_TYPE *t;
-	id=current_id;
-	while (id) {
-		if (id->level<current_level)
-			break;
-		t=id->type;
-		if (id->kind==ID_NULL)
-			syntax_error(31,id->name);
-		else if ((id->kind==ID_STRUCT || id->kind==ID_ENUM) &&
-				t->field==NIL)
-			syntax_error(32,id->name);
-		id=id->prev;
-	}
-}
-// set default specifier
-void setDefaultSpecifier(A_SPECIFIER *p)
-{
-	A_TYPE *t;
-	if (p->type==NIL)
-		p->type=int_type;
-	if (p->stor==S_NULL)
-		p->stor=S_AUTO;
-}
-// specifier merge & update
-A_SPECIFIER *updateSpecifier(A_SPECIFIER *p, A_TYPE *t, S_KIND s)
-{
-	if (t) {
-		if ( p->type) {
-			if (p->type==t)
-				;
-			else
-				syntax_error(24,"");   //인자 2개를 넣어야하는데 교재에는 하나만 들어가서 에러가 남 -> 빈칸 넣어줌으로서 해결
-		}
-		else
-			p->type=t;
-	}
 
-	if (s) {
-		if (p->stor) {
-			if(s==p->stor) {
-				;
-			}
-			else {
-				syntax_error(24,"");   //인자 2개를 넣어야하는데 교재에는 하나만 들어가서 에러가 남 -> 빈칸 넣어줌으로서 해결
-			}
-		}
-		else {
-			p->stor=s;
-		}
-	}
-	return (p);
-}
-// link two declaraor list id1 & id2
-A_ID *linkDeclaratorList(A_ID *id1, A_ID *id2)
+void print_sem_ast(A_NODE *node) 
 {
-	A_ID * m = id1;
-	if (id1==NIL) return(id2);
-	while(m->link)
-		m=m->link;
-	m->link=id2;
-	return (id1);
-}
-// check if identifier is already declared in primary expression
-A_ID *getIdentifierDeclared(char *s)
-{
-	A_ID *id;
-	id=searchIdentifier(s,current_id);
-	if(id==NIL)
-		syntax_error(13,s);
-	return(id);
-}
-// get type of struct id
-A_TYPE * getTypeOfStructOrEnumRefIdentifier(T_KIND k,char *s,ID_KIND kk)
-{
-	A_TYPE *t;
-	A_ID * id;
-	id=searchIdentifier(s,current_id);
-	if (id) {
-		if (id->kind==kk && id->type->kind==k) {
-			return(id->type);
-		}
-		else {
-			syntax_error(11,s);
-		}
-	}
-	// make a new struct (or enum) identifier
-	t=makeType(k);
-	id=makeIdentifier(s);
-	id->kind=kk;
-	id->type=t;
-	return(t);
-}
-// set declarator init (expression tree)
-A_ID *setDeclaratorInit(A_ID *id, A_NODE *n)
-{
-	id->init=n;
-	return(id);
-}
-// set declarator kind
-A_ID *setDeclaratorKind(A_ID *id, ID_KIND k)
-{
-	A_ID *a;
-	a=searchIdentifierAtCurrentLevel(id->name,id->prev);
-	if (a)
-		syntax_error(12,id->name);
-	id->kind=k;
-	return(id);
-}
-// set declarator type
-A_ID *setDeclaratorType(A_ID *id, A_TYPE *t)
-{
-	id->type=t;
-	return(id);
-}
-// set declarator type (or element type)
-A_ID *setDeclaratorElementType(A_ID *id, A_TYPE *t)
-{
-	A_TYPE *tt;
-	if(id->type == NIL) {
-		id->type = t;
-	}
-	else {
-		tt = id->type;
-		while(tt->element_type)
-			tt = tt->element_type;
-		tt->element_type = t;
-	}
-
-	return (id);
-}
-// set declarator element type and kind
-A_ID *setDeclaratorTypeAndKind(A_ID *id, A_TYPE *t,ID_KIND k)
-{
-	id=setDeclaratorElementType(id,t);
-	id=setDeclaratorKind(id,k);
-	return(id);
-}
-// check function declarator and return type
-A_ID *setFunctionDeclaratorSpecifier(A_ID *id, A_SPECIFIER *p)
-{
-	A_ID *a;
-	// check storage class
-	if (p->stor)
-		syntax_error(25,"");
-	setDefaultSpecifier(p);
-	// check check if there is a function identifier immediately before '('
-	if(id->type->kind != T_FUNC) {
-		syntax_error(21,"");
-		return (id);
-	}
-	else {
-		id = setDeclaratorElementType(id, p->type);
-		id->kind = ID_FUNC;
-	}
-	// check redeclaration
-	a=searchIdentifierAtCurrentLevel(id->name,id->prev);
-	if (a) {
-		if (a->kind!=ID_FUNC || a->type->expr)
-			syntax_error(12,id->name);
-		else { // check prototype: parameters and return type
-			if(isNotSameFormalParameters(a->type->field, id->type->field))
-				syntax_error(22, id->name);
-			if(isNotSameType(a->type->element_type, id->type->element_type))
-				syntax_error(26, a->name);
-		}
-	}
-	// change parameter scope and check empty name
-	a=id->type->field;
-	while (a) {
-		if (strlen(a->name))
-			current_id=a;
-		else if (a->type)
-			syntax_error(23,"");
-		a=a->link; }
-	return(id);
-}
-A_ID *setFunctionDeclaratorBody(A_ID *id, A_NODE *n)
-{
-	id->type->expr=n;
-	return(id);
-}
-// set declarator_list type and kind based on storage class
-A_ID *setDeclaratorListSpecifier(A_ID *id, A_SPECIFIER *p)
-{
-	A_ID *a;
-	setDefaultSpecifier(p);
-	a=id;
-	while (a) {
-		if (strlen(a->name) && searchIdentifierAtCurrentLevel(a->name,a->prev))
-			syntax_error(12,a->name);
-		a = setDeclaratorElementType(a, p->type);
-		if(p->stor == S_TYPEDEF)
-			a->kind = ID_TYPE;
-		else if(a->type->kind == T_FUNC)
-			a->kind = ID_FUNC;
-		else
-			a->kind = ID_VAR;
-		a->specifier=p->stor;
-
-		if(a->specifier == S_NULL)
-			a->specifier = S_AUTO;
-		a = a->link;
-	}
-	return(id);
-}
-// set declarator_list type and kind
-A_ID *setParameterDeclaratorSpecifier(A_ID *id, A_SPECIFIER *p)
-{
-	// check redeclaration
-	if (searchIdentifierAtCurrentLevel(id->name,id->prev))
-		syntax_error(12,id->name);
-	// check papameter storage class && void type
-	if (p->stor || p->type==void_type)
-		syntax_error(14,"");
-	setDefaultSpecifier(p);
-	id = setDeclaratorElementType(id, p->type);
-	id->kind = ID_PARM;
-	return(id);
-}
-A_ID *setStructDeclaratorListSpecifier(A_ID *id, A_TYPE *t)
-{
-	A_ID *a;
-	a=id;
-	while (a) {
-		if(searchIdentifierAtCurrentLevel(a->name, a->prev))
-			syntax_error(12, a->name);
-		a = setDeclaratorElementType(a, t);
-		a->kind = ID_FIELD;
-		a = a->link;
-	}
-	return(id);
-}
-// set type name specifier
-A_TYPE *setTypeNameSpecifier(A_TYPE *t, A_SPECIFIER *p)
-{
-	// check storage class in type name
-	if (p->stor)
-		syntax_error(20,"");
-	setDefaultSpecifier(p);
-	t=setTypeElementType(t,p->type);
-	return(t);
-}
-// set type element type
-A_TYPE *setTypeElementType(A_TYPE *t, A_TYPE *s)
-{
-	A_TYPE *q;
-	if (t==NIL)
-		return(s);
-	q=t;
-	while (q->element_type)
-		q=q->element_type;
-	q->element_type=s;
-	return(t);
-}
-// set type field
-A_TYPE *setTypeField(A_TYPE *t, A_ID *n)
-{
-	t->field=n;
-	return(t);
-}
-// set type initial value (expression tree)
-A_TYPE *setTypeExpr(A_TYPE *t, A_NODE *n)
-{
-	t->expr=n;
-	return(t);
-}
-// set type of struct iIdentifier
-A_TYPE *setTypeStructOrEnumIdentifier(T_KIND k, char *s, ID_KIND kk)
-{
-	A_TYPE *t;
-	A_ID *id, *a;
-	// check redeclaration or forward declaration
-	a=searchIdentifierAtCurrentLevel(s,current_id);
-	if (a) {
-		if (a->kind==kk && a->type->kind==k) {
-			if (a->type->field) {
-				syntax_error(12,s);
-			}
-			else {
-				return(a->type);
-			}
-		}
-		else {
-			syntax_error(12,s);
-		}
-	}
-	// make a new struct (or enum) identifier
-	id=makeIdentifier(s);
-	t=makeType(k);
-	id->type=t;
-	id->kind=kk;
-	return(t);
-}
-// set type and kinf of identifier
-A_TYPE *setTypeAndKindOfDeclarator(A_TYPE *t, ID_KIND k, A_ID *id)
-{
-	if (searchIdentifierAtCurrentLevel(id->name,id->prev))
-		syntax_error(12,id->name);
-	id->type=t;
-	id->kind=k;
-	return(t);
-}
-// check function parameters with protype
-BOOLEAN isNotSameFormalParameters(A_ID *a, A_ID *b)
-{
-	if (a==NIL) // no parameters in prototype
-		return(FALSE);
-	while(a) {
-		if (b==NIL || isNotSameType(a->type,b->type))
-			return(TRUE);
-		a=a->link;
-		b=b->link; }
-	if (b)
-		return(TRUE);
-	else
-		return(FALSE);
-}
-BOOLEAN isNotSameType(A_TYPE *t1, A_TYPE *t2)
-{
-	if (isPointerOrArrayType(t1) || isPointerOrArrayType(t2))
-		return (isNotSameType(t1->element_type,t2->element_type));
-	else
-		return (t1!=t2);
-}
-void initialize()
-{
-	// primitive data types
-	int_type= setTypeAndKindOfDeclarator(
-			makeType(T_ENUM),ID_TYPE,makeIdentifier("int"));
-	float_type=setTypeAndKindOfDeclarator(
-			makeType(T_ENUM),ID_TYPE,makeIdentifier("float"));
-	char_type= setTypeAndKindOfDeclarator(
-			makeType(T_ENUM),ID_TYPE,makeIdentifier("char"));
-	void_type= setTypeAndKindOfDeclarator(
-			makeType(T_VOID),ID_TYPE,makeIdentifier("void"));
-	string_type=setTypeElementType(makeType(T_POINTER),char_type);
-	int_type->size=4; int_type->check=TRUE;
-	float_type->size=4; float_type->check=TRUE;
-	char_type->size=1; char_type->check=TRUE;
-	void_type->size=0; void_type->check=TRUE;
-	string_type->size=4; string_type->check=TRUE;
-	// printf(char *, ...) library function
-	setDeclaratorTypeAndKind(
-			makeIdentifier("printf"),
-			setTypeField(
-				setTypeElementType(makeType(T_FUNC),void_type),
-				linkDeclaratorList(
-					setDeclaratorTypeAndKind(makeDummyIdentifier(),string_type,ID_PARM),
-					setDeclaratorKind(makeDummyIdentifier(),ID_PARM))),
-			ID_FUNC);
-	// scanf(char *, ...) library function
-	setDeclaratorTypeAndKind(
-			makeIdentifier("scanf"),
-			setTypeField(
-				setTypeElementType(makeType(T_FUNC),void_type),
-				linkDeclaratorList(
-					setDeclaratorTypeAndKind(makeDummyIdentifier(),string_type,ID_PARM),
-					setDeclaratorKind(makeDummyIdentifier(),ID_PARM))),
-			ID_FUNC);
-	// malloc(int) library function
-	setDeclaratorTypeAndKind(
-			makeIdentifier("malloc"),
-			setTypeField(
-				setTypeElementType(makeType(T_FUNC),string_type),
-				setDeclaratorTypeAndKind(makeDummyIdentifier(),int_type,ID_PARM)),
-			ID_FUNC);
+	printf("=======  semantic tree  ==========\n");
+	prt_sem_program(node,0);
 }
 
-BOOLEAN isPointerOrArrayType(A_TYPE *t) {     //page 321에 정의 됨 -> 안하면 정의 안되어있다고 오류나옴
-	if(t && (t->kind == T_POINTER || t->kind == T_ARRAY))
-		return(TRUE);
-	else
-		return(FALSE);
-}
-
-void syntax_error(int i,char *s)
-{
-	syntax_err++;
-	printf("line %d: syntax error: ", line_no);
-	switch (i) {
-		case 11: printf("illegal referencing struct or union identifier %s",s);
-				 break;
-		case 12: printf("redeclaration of identifier %s",s); break;
-		case 13: printf("undefined identifier %s",s); break;
-		case 14: printf("illegal type specifier in formal parameter"); break;
-		case 20: printf("illegal storage class in type specifiers"); break;
-		case 21: printf("illegal function declarator"); break;
-		case 22: printf("conflicting parameter type in prototype function %s",s);
-				 break;
-		case 23: printf("empty parameter name"); break;
-		case 24: printf("illegal declaration specifiers"); break;
-		case 25: printf("illegal function specifiers"); break;
-		case 26: printf("illegal or conflicting return type in prototype function %s", s);
-				 break;
-		case 31: printf("undefined type for identifier %s",s); break;
-		case 32: printf("incomplete forward reference for identifier %s",s);
-				 break;
-		default: printf("unknown"); break;
-	}
-	if (strlen(yytext)==0)
-		printf(" at end\n");
-	else
-		printf(" near %s\n", yytext);
-}
-
-char * node_name[] = {
-	"N_NULL",
-	"N_PROGRAM",
-	"N_EXP_IDENT",
-	"N_EXP_INT_CONST",
-	"N_EXP_FLOAT_CONST",
-	"N_EXP_CHAR_CONST",
-	"N_EXP_STRING_LITERAL",
-	"N_EXP_ARRAY",
-	"N_EXP_FUNCTION_CALL",
-	"N_EXP_STRUCT",
-	"N_EXP_ARROW",
-	"N_EXP_POST_INC",
-	"N_EXP_POST_DEC",
-	"N_EXP_PRE_INC",
-	"N_EXP_PRE_DEC",
-	"N_EXP_AMP",
-	"N_EXP_STAR",
-	"N_EXP_NOT",
-	"N_EXP_PLUS",
-	"N_EXP_MINUS",
-	"N_EXP_SIZE_EXP",
-	"N_EXP_SIZE_TYPE",
-	"N_EXP_CAST",
-	"N_EXP_MUL",
-	"N_EXP_DIV",
-	"N_EXP_MOD",
-	"N_EXP_ADD",
-	"N_EXP_SUB",
-	"N_EXP_LSS",
-	"N_EXP_GTR",
-	"N_EXP_LEQ",
-	"N_EXP_GEQ",
-	"N_EXP_NEQ",
-	"N_EXP_EQL",
-	"N_EXP_AND",
-	"N_EXP_OR",
-	"N_EXP_ASSIGN",
-	
-	"N_ARG_LIST",
-	"N_ARG_LIST_NIL",
-	
-	"N_STMT_LABEL_CASE",
-	"N_STMT_LABEL_DEFAULT",
-	"N_STMT_COMPOUND",
-	"N_STMT_EMPTY",
-	"N_STMT_EXPRESSION",
-	"N_STMT_IF",
-	"N_STMT_IF_ELSE",
-	"N_STMT_SWITCH",
-	"N_STMT_WHILE",
-	"N_STMT_DO",
-	"N_STMT_FOR",
-	"N_STMT_RETURN",
-	"N_STMT_CONTINUE",
-	"N_STMT_BREAK",
-	
-	"N_FOR_EXP",
-	"N_STMT_LIST",
-	"N_STMT_LIST_NIL",
-	
-	"N_INIT_LIST",
-	"N_INIT_LIST_ONE",
-	"N_INIT_LIST_NIL"};
-
-
-void print_node(A_NODE *node, int s)
-{
-	print_space(s);
-	printf("%s\n", node_name[node->name]);
-}
-
-void print_space(int s)
-{
-	int i;
-	for(i=1; i<=s; i++) printf("|  ");
-}
-
-void print_ast(A_NODE *node) 
-{
-	printf("=======  syntax tree  ==========\n");
-	prt_program(node,0);
-}
-
-void prt_program(A_NODE *node, int s)
+void prt_sem_program(A_NODE *node, int s)
 {
 	print_node(node,s);
 
 	switch(node->name) {
 
 	   case N_PROGRAM:
-		prt_A_ID_LIST(node->clink, s+1);
+		prt_sem_A_ID_LIST(node->clink, s+1);
 		break;
 	   default :
 		printf("****syntax tree error******");
 	}
 }
 
-void prt_initializer(A_NODE *node, int s)
+void prt_sem_initializer(A_NODE *node, int s)
 {
 	print_node(node,s);
 
 	switch(node->name) {
 
 	   case N_INIT_LIST:
-		prt_initializer(node->llink, s+1);
-		prt_initializer(node->rlink, s+1);
+		prt_sem_initializer(node->llink, s+1);
+		prt_sem_initializer(node->rlink, s+1);
 		break;
 	   case N_INIT_LIST_ONE:
-		prt_expression(node->clink, s+1);
+		prt_sem_expression(node->clink, s+1);
 		break;
 	   case N_INIT_LIST_NIL:
 		break;
@@ -2212,38 +2457,41 @@ void prt_initializer(A_NODE *node, int s)
 }
 
 
-void prt_expression(A_NODE *node, int s)
+void prt_sem_expression(A_NODE *node, int s)
 {
 	print_node(node,s);
 	switch(node->name) {
 
 	   case N_EXP_IDENT : 
-		prt_A_ID_NAME(node->clink, s+1);
+		prt_sem_A_ID_NAME(node->clink, s+1);
 		break;
 	   case N_EXP_INT_CONST :
-		prt_integer(node->clink, s+1);
+		prt_sem_integer(node->clink, s+1);
 		break;
 	   case N_EXP_FLOAT_CONST :
- 		prt_STRING(node->clink, s+1);
+ 		prt_sem_LITERAL(node->clink, s+1);
 		break;
 	   case N_EXP_CHAR_CONST :
- 		prt_integer(node->clink, s+1);
+ 		prt_sem_integer(node->clink, s+1);
 		break;
 	   case N_EXP_STRING_LITERAL :
-		prt_STRING(node->clink, s+1);
+		prt_sem_LITERAL(node->clink, s+1);
 		break;
 	   case N_EXP_ARRAY :
-		prt_expression(node->llink, s+1);
-		prt_expression(node->rlink, s+1);
+		prt_sem_expression(node->llink, s+1);
+		prt_sem_expression(node->rlink, s+1);
 		break;
 	   case N_EXP_FUNCTION_CALL : 
-		prt_expression(node->llink, s+1);
-		prt_arg_expr_list(node->rlink, s+1);
+		prt_sem_expression(node->llink, s+1);
+		prt_sem_arg_expr_list(node->rlink, s+1);
 		break;
 	   case N_EXP_STRUCT : 
+		prt_sem_expression(node->llink, s+1);
+		prt_sem_A_ID_NAME(node->rlink, s+1);
+		break;
 	   case N_EXP_ARROW : 
-		prt_expression(node->llink, s+1);
-		prt_STRING(node->rlink, s+1);
+		prt_sem_expression(node->llink, s+1);
+		prt_sem_A_ID_NAME(node->rlink, s+1);
 		break;
 	   case N_EXP_POST_INC :
 	   case N_EXP_POST_DEC :
@@ -2254,15 +2502,15 @@ void prt_expression(A_NODE *node, int s)
 	   case N_EXP_NOT :
 	   case N_EXP_PLUS :
 	   case N_EXP_MINUS :
-	   case N_EXP_SIZE_EXP :
-		prt_expression(node->clink, s+1);
+		prt_sem_expression(node->clink, s+1);
    		break;
+	   case N_EXP_SIZE_EXP :
 	   case N_EXP_SIZE_TYPE :
-		prt_A_TYPE(node->clink, s+1);
+		prt_sem_integer(node->clink, s+1);
    		break;
 	   case N_EXP_CAST :
-		prt_A_TYPE(node->llink, s+1);
-		prt_expression(node->rlink, s+1);
+		prt_sem_A_TYPE(node->llink, s+1);
+		prt_sem_expression(node->rlink, s+1);
    		break;
 	   case N_EXP_MUL :
 	   case N_EXP_DIV :
@@ -2278,23 +2526,23 @@ void prt_expression(A_NODE *node, int s)
 	   case N_EXP_AND :
 	   case N_EXP_OR :
 	   case N_EXP_ASSIGN :
-		prt_expression(node->llink, s+1);
-		prt_expression(node->rlink, s+1);
+		prt_sem_expression(node->llink, s+1);
+		prt_sem_expression(node->rlink, s+1);
    		break;
 	   default : 
 		printf("****syntax tree error******");
 	}
 }
 
-void prt_arg_expr_list(A_NODE *node, int s)
+void prt_sem_arg_expr_list(A_NODE *node, int s)
 {
 	print_node(node,s);
 
 	switch(node->name) {
 
 	   case N_ARG_LIST : 
-		prt_expression(node->llink, s+1);
-		prt_arg_expr_list(node->rlink, s+1);
+		prt_sem_expression(node->llink, s+1);
+		prt_sem_arg_expr_list(node->rlink, s+1);
 		break;
 	   case N_ARG_LIST_NIL : 
 		break;
@@ -2303,113 +2551,118 @@ void prt_arg_expr_list(A_NODE *node, int s)
 	}	
 }
 
-void prt_statement(A_NODE *node, int s)
+void prt_sem_statement(A_NODE *node, int s)
 {
 	print_node(node,s);
 	 
 	switch(node->name) {
 	   case N_STMT_LABEL_CASE :
-		prt_expression(node->llink, s+1);
-		prt_statement(node->rlink, s+1);
+		prt_sem_integer(node->llink, s+1);
+		prt_sem_statement(node->rlink, s+1);
 		break;
 	   case N_STMT_LABEL_DEFAULT :
-		prt_statement(node->clink, s+1);
+		prt_sem_statement(node->clink, s+1);
 		break;
 	   case N_STMT_COMPOUND:
-		if(node->llink) 
-			prt_A_ID_LIST(node->llink, s+1);
-		prt_statement_list(node->rlink, s+1);
+		if(node->llink) prt_sem_A_ID_LIST(node->llink, s+1);
+		prt_sem_statement_list(node->rlink, s+1);
 		break;
 	   case N_STMT_EMPTY:
 		break;
 	   case N_STMT_EXPRESSION:
-		prt_expression(node->clink, s+1);
-		break;
-	   case N_STMT_IF_ELSE:
-		prt_expression(node->llink, s+1);
-		prt_statement(node->clink, s+1);
-		prt_statement(node->rlink, s+1);
+		prt_sem_expression(node->clink, s+1);
 		break;
 	   case N_STMT_IF:
+		prt_sem_expression(node->llink, s+1);
+		prt_sem_statement(node->rlink, s+1);
+		break;
+	   case N_STMT_IF_ELSE:
+		prt_sem_expression(node->llink, s+1);
+		prt_sem_statement(node->clink, s+1);
+		prt_sem_statement(node->rlink, s+1);
+		break;
 	   case N_STMT_SWITCH:
-		prt_expression(node->llink, s+1);
-		prt_statement(node->rlink, s+1);
+		prt_sem_expression(node->llink, s+1);
+		prt_sem_statement(node->rlink, s+1);
 		break;
 	   case N_STMT_WHILE:
-		prt_expression(node->llink, s+1);
-		prt_statement(node->rlink, s+1);
+		prt_sem_expression(node->llink, s+1);
+		prt_sem_statement(node->rlink, s+1);
 		break;
 	   case N_STMT_DO:
-		prt_statement(node->llink, s+1);
-		prt_expression(node->rlink, s+1);
+		prt_sem_statement(node->llink, s+1);
+		prt_sem_expression(node->rlink, s+1);
 		break;
 	   case N_STMT_FOR:
-		prt_for_expression(node->llink, s+1);
-		prt_statement(node->rlink, s+1);
+		prt_sem_for_expression(node->llink, s+1);
+		prt_sem_statement(node->rlink, s+1);
 		break;
 	   case N_STMT_CONTINUE:
 		break;
 	   case N_STMT_BREAK:
 		break;
 	   case N_STMT_RETURN:
-		if(node->clink) 
-			prt_expression(node->clink, s+1);
+		if(node->clink) prt_sem_expression(node->clink, s+1);
 		break;
 	   default :
 		printf("****syntax tree error******");
 	}
 }
 
-void prt_statement_list(A_NODE *node, int s)
+
+void prt_sem_statement_list(A_NODE *node, int s)
 {
 	print_node(node,s);
 
 	switch(node->name) {
 
-	case N_STMT_LIST:
-		prt_statement(node->llink, s+1);
-		prt_statement_list(node->rlink, s+1);
+	   case N_STMT_LIST:
+		prt_sem_statement(node->llink, s+1);
+		prt_sem_statement_list(node->rlink, s+1);
 		break;
-	case N_STMT_LIST_NIL:
+	   case N_STMT_LIST_NIL:
 		break;
-	default :
+	   default :
 		printf("****syntax tree error******");
 		
 	}
 }
-void prt_for_expression(A_NODE *node, int s)
+
+void prt_sem_for_expression(A_NODE *node, int s)
 {
 	print_node(node,s);
 	
 	switch(node->name) {
 		
 	   case N_FOR_EXP :
-		if(node->llink) 
-			prt_expression(node->llink, s+1);
-		if(node->clink) 
-			prt_expression(node->clink, s+1);
-		if(node->rlink) 
-			prt_expression(node->rlink, s+1);
+		if(node->llink) prt_sem_expression(node->llink, s+1);
+		if(node->clink) prt_sem_expression(node->clink, s+1);
+		if(node->rlink) prt_sem_expression(node->rlink, s+1);
 		break;
 	   default :
 		printf("****syntax tree error******");
 	}
 }
 
-void prt_integer(int a, int s)
+void prt_sem_integer(int a, int s)
 {
 	print_space(s);
-	printf("%d\n", a);
+	printf("INT=%d\n", a);
 }
 
-void prt_STRING(char *str, int s) {
+void prt_sem_LITERAL(int lit, int s) 
+{
 	print_space(s);
-	printf("%s\n", str);
+	printf("LITERAL: ");
+	if (literal_table[lit].type==int_type)
+		printf("%d\n", literal_table[lit].value.i);
+	if (literal_table[lit].type==float_type)
+		printf("%f\n", literal_table[lit].value.f);
+	else if (literal_table[lit].type==string_type)
+		printf("%s\n", literal_table[lit].value.s);
 }
-
-char *type_kind_name[]={"NULL","ENUM","ARRAY","STRUCT","UNION","FUNC","POINTER","VOID"};
 	
-void prt_A_TYPE(A_TYPE *t, int s) 
+void prt_sem_A_TYPE(A_TYPE *t, int s) 
 {
 	print_space(s);
 	if (t==int_type) 
@@ -2418,98 +2671,1257 @@ void prt_A_TYPE(A_TYPE *t, int s)
 		printf("(float)\n");
 	else if (t==char_type) 
 		printf("(char %d)\n",t->size);
-	else if (t==void_type)
-		printf("(void)");
+	else if (t==void_type) 
+		printf("(void)\n");
 	else if (t->kind==T_NULL)
-		printf("(null)");
-	else if (t->prt)
+		printf("(null)\n");
+	else if (t->prt==FALSE)
 		printf("(DONE:%x)\n",t);
-	else 
+	else
 	   switch (t->kind) {
 		case T_ENUM:
-			t->prt=TRUE;
+			t->prt=FALSE;
 			printf("ENUM\n");
 			print_space(s); printf("|  ENUMERATORS\n");
-			prt_A_ID_LIST(t->field,s+2);
+			prt_sem_A_ID_LIST(t->field,s+2);
 			break;
 		case T_POINTER:
-			t->prt=TRUE;
+			t->prt=FALSE;
 			printf("POINTER\n");
 			print_space(s); printf("|  ELEMENT_TYPE\n");
-			prt_A_TYPE(t->element_type,s+2);
+			prt_sem_A_TYPE(t->element_type,s+2);
 			break;
 		case T_ARRAY:
-			t->prt=TRUE;
+			t->prt=FALSE;
 			printf("ARRAY\n");
 			print_space(s); printf("|  INDEX\n");
-			if (t->expr)
-				prt_expression(t->expr,s+2);
-			else {
-				print_space(s+2); printf("(none)\n");}
+			prt_sem_integer(t->expr,s+2);
 			print_space(s); printf("|  ELEMENT_TYPE\n");
-			prt_A_TYPE(t->element_type,s+2);
+			prt_sem_A_TYPE(t->element_type,s+2);
 			break;
 		case T_STRUCT:
-			t->prt=TRUE;
+			t->prt=FALSE;
 			printf("STRUCT\n");
 			print_space(s); printf("|  FIELD\n");
-			prt_A_ID_LIST(t->field,s+2);
+			prt_sem_A_ID_LIST(t->field,s+2);
 			break;
 		case T_UNION:
-			t->prt=TRUE;
+			t->prt=FALSE;
 			printf("UNION\n");
 			print_space(s); printf("|  FIELD\n");
-			prt_A_ID_LIST(t->field,s+2);
+			prt_sem_A_ID_LIST(t->field,s+2);
 			break;
 		case T_FUNC:
-			t->prt=TRUE;
+			t->prt=FALSE;
 			printf("FUNCTION\n");
 			print_space(s); printf("|  PARAMETER\n");
-			prt_A_ID_LIST(t->field,s+2);
+			prt_sem_A_ID_LIST(t->field,s+2);
 			print_space(s); printf("|  TYPE\n");
-			prt_A_TYPE(t->element_type,s+2);
+			prt_sem_A_TYPE(t->element_type,s+2);
 			if (t->expr) {
 				print_space(s); printf("|  BODY\n");
-				prt_statement(t->expr,s+2);}
+				prt_sem_statement(t->expr,s+2);}
 	   }
 }
 
-void prt_A_ID_LIST(A_ID *id, int s)
+void prt_sem_A_ID_LIST(A_ID *id, int s)
 {
 	while (id) {
-		prt_A_ID(id,s);
+		prt_sem_A_ID(id,s);
 		id=id->link;
 	}
 }
 
-char *id_kind_name[]={"NULL","VAR","FUNC","PARM","FIELD","TYPE","ENUM","STRUCT","ENUM_LITERAL"};
-char *spec_name[]={"NULL","AUTO","TYPEDEF","STATIC"};
-
-void prt_A_ID_NAME(A_ID *id, int s)
+void prt_sem_A_ID_NAME(A_ID *id, int s)
 {
 	print_space(s);
-	printf("(ID=\"%s\") TYPE:%x KIND:%s SPEC=%s LEV=%d \n", id->name, id->type,
-		id_kind_name[id->kind], spec_name[id->specifier],id->level);
+	printf("(ID=\"%s\") TYPE:%x KIND:%s SPEC=%s LEV=%d VAL=%d ADDR=%d \n", id->name, id->type,
+		id_kind_name[id->kind], spec_name[id->specifier],id->level, id->value, id->address);
 }
 
-void prt_A_ID(A_ID *id, int s)
+void prt_sem_A_ID(A_ID *id, int s)
 {
 	print_space(s);
-	printf("(ID=\"%s\") TYPE:%x KIND:%s SPEC=%s LEV=%d\n", id->name, id->type,
-		id_kind_name[id->kind], spec_name[id->specifier],id->level);
+	printf("(ID=\"%s\") TYPE:%x KIND:%s SPEC=%s LEV=%d VAL=%d ADDR=%d \n", id->name, id->type,
+		id_kind_name[id->kind], spec_name[id->specifier],id->level, id->value, id->address);
 	if (id->type) {
 		print_space(s);
 		printf("|  TYPE\n");
-		prt_A_TYPE(id->type,s+2);}
+		prt_sem_A_TYPE(id->type,s+2);}
 	if (id->init) {
 		print_space(s);
 		printf("|  INIT\n");
 		if (id->kind==ID_ENUM_LITERAL)
-			prt_expression(id->init,s+2);
-		else 
-			prt_initializer(id->init,s+2); }
+			if (id->init) 
+				prt_sem_integer(id->init,s+2);
+			else ;
+		else
+			prt_sem_initializer(id->init,s+2); }
 }
-/* Identify Bison output.  */
+
+
+void print_node(A_NODE *node, int s)
+{
+    print_space(s);
+    printf("%s (%x,%d)\n", node_name[node->name], node->type, node->value);
+}
+
+void print_space(int s)
+{
+    int i;
+    for (i = 1; i <= s; i++)
+        printf("| ");
+}
+
+void print_ast(A_NODE *node)
+{
+    printf("======= syntax tree ==========\n");
+    prt_program(node, 0);
+}
+
+void prt_program(A_NODE *node, int s)
+{
+    print_node(node, s);
+    switch (node->name)
+    {
+    case N_PROGRAM:
+        prt_A_ID_LIST(node->clink, s + 1);
+        break;
+    default:
+        printf("****syntax tree error******");
+    }
+}
+
+void prt_initializer(A_NODE *node, int s)
+{
+    print_node(node, s);
+    switch (node->name)
+    {
+    case N_INIT_LIST:
+        prt_initializer(node->llink, s + 1);
+        prt_initializer(node->rlink, s + 1);
+        break;
+    case N_INIT_LIST_ONE:
+        prt_expression(node->clink, s + 1);
+        break;
+    case N_INIT_LIST_NIL:
+        break;
+    default:
+        printf("****syntax tree error******");
+    }
+}
+
+void prt_expression(A_NODE *node, int s)
+{
+    print_node(node, s);
+    switch (node->name)
+    {
+    case N_EXP_IDENT:
+        prt_A_ID_NAME(node->clink, s + 1);
+        break;
+    case N_EXP_INT_CONST:
+        prt_integer(node->clink, s + 1);
+        break;
+    case N_EXP_FLOAT_CONST:
+        prt_STRING(node->clink, s + 1);
+        break;
+    case N_EXP_CHAR_CONST:
+        prt_integer(node->clink, s + 1);
+        break;
+    case N_EXP_STRING_LITERAL:
+        prt_STRING(node->clink, s + 1);
+        break;
+    case N_EXP_ARRAY:
+        prt_expression(node->llink, s + 1);
+        prt_expression(node->rlink, s + 1);
+        break;
+    case N_EXP_FUNCTION_CALL:
+        prt_expression(node->llink, s + 1);
+        prt_arg_expr_list(node->rlink, s + 1);
+        break;
+    case N_EXP_STRUCT:
+    case N_EXP_ARROW:
+        prt_expression(node->llink, s + 1);
+        prt_STRING(node->rlink, s + 1);
+        break;
+    case N_EXP_POST_INC:
+    case N_EXP_POST_DEC:
+    case N_EXP_PRE_INC:
+    case N_EXP_PRE_DEC:
+    case N_EXP_AMP:
+    case N_EXP_STAR:
+    case N_EXP_NOT:
+    case N_EXP_PLUS:
+    case N_EXP_MINUS:
+    case N_EXP_SIZE_EXP:
+        prt_expression(node->clink, s + 1);
+        break;
+    case N_EXP_SIZE_TYPE:
+        prt_A_TYPE(node->clink, s + 1);
+        break;
+    case N_EXP_CAST:
+        prt_A_TYPE(node->llink, s + 1);
+        prt_expression(node->rlink, s + 1);
+        break;
+    case N_EXP_MUL:
+    case N_EXP_DIV:
+    case N_EXP_MOD:
+    case N_EXP_ADD:
+    case N_EXP_SUB:
+    case N_EXP_LSS:
+    case N_EXP_GTR:
+    case N_EXP_LEQ:
+    case N_EXP_GEQ:
+    case N_EXP_NEQ:
+    case N_EXP_EQL:
+    case N_EXP_AND:
+    case N_EXP_OR:
+    case N_EXP_ASSIGN:
+        prt_expression(node->llink, s + 1);
+        prt_expression(node->rlink, s + 1);
+        break;
+    default:
+        printf("****syntax tree error******");
+    }
+}
+
+void prt_arg_expr_list(A_NODE *node, int s)
+{
+    print_node(node, s);
+    switch (node->name)
+    {
+    case N_ARG_LIST:
+        prt_expression(node->llink, s + 1);
+        prt_arg_expr_list(node->rlink, s + 1);
+        break;
+    case N_ARG_LIST_NIL:
+        break;
+    default:
+        printf("****syntax tree error******");
+    }
+}
+
+void prt_statement(A_NODE *node, int s)
+{
+    print_node(node, s);
+    switch (node->name)
+    {
+    case N_STMT_LABEL_CASE:
+        prt_expression(node->llink, s + 1);
+        prt_statement(node->rlink, s + 1);
+        break;
+    case N_STMT_LABEL_DEFAULT:
+        prt_statement(node->clink, s + 1);
+        break;
+    case N_STMT_COMPOUND:
+        if (node->llink)
+            prt_A_ID_LIST(node->llink, s + 1);
+        prt_statement_list(node->rlink, s + 1);
+        break;
+    case N_STMT_EMPTY:
+        break;
+    case N_STMT_EXPRESSION:
+        prt_expression(node->clink, s + 1);
+        break;
+    case N_STMT_IF_ELSE:
+        prt_expression(node->llink, s + 1);
+        prt_statement(node->clink, s + 1);
+        prt_statement(node->rlink, s + 1);
+        break;
+    case N_STMT_IF:
+    case N_STMT_SWITCH:
+        prt_expression(node->llink, s + 1);
+        prt_statement(node->rlink, s + 1);
+        break;
+    case N_STMT_WHILE:
+        prt_expression(node->llink, s + 1);
+        prt_statement(node->rlink, s + 1);
+        break;
+    case N_STMT_DO:
+        prt_statement(node->llink, s + 1);
+        prt_expression(node->rlink, s + 1);
+        break;
+    case N_STMT_FOR:
+        prt_for_expression(node->llink, s + 1);
+        prt_statement(node->rlink, s + 1);
+        break;
+    case N_STMT_CONTINUE:
+        break;
+    case N_STMT_BREAK:
+        break;
+    case N_STMT_RETURN:
+        if (node->clink)
+            prt_expression(node->clink, s + 1);
+        break;
+    default:
+        printf("****syntax tree error******");
+    }
+}
+
+void prt_statement_list(A_NODE *node, int s)
+{
+    print_node(node, s);
+    switch (node->name)
+    {
+    case N_STMT_LIST:
+        prt_statement(node->llink, s + 1);
+        prt_statement_list(node->rlink, s + 1);
+        break;
+    case N_STMT_LIST_NIL:
+        break;
+    default:
+        printf("****syntax tree error******");
+    }
+}
+
+void prt_for_expression(A_NODE *node, int s)
+{
+    print_node(node, s);
+    switch (node->name)
+    {
+    case N_FOR_EXP:
+        if (node->llink)
+            prt_expression(node->llink, s + 1);
+        if (node->clink)
+            prt_expression(node->clink, s + 1);
+        if (node->rlink)
+            prt_expression(node->rlink, s + 1);
+        break;
+    default:
+        printf("****syntax tree error******");
+    }
+}
+
+void prt_integer(int a, int s)
+{
+    print_space(s);
+    printf("%d\n", a);
+}
+void prt_STRING(char *str, int s)
+{
+    print_space(s);
+    printf("%s\n", str);
+}
+char *type_kind_name[] = {"NULL", "ENUM", "ARRAY", "STRUCT", "UNION", "FUNC", "POINTER", "V OID"};
+void prt_A_TYPE(A_TYPE *t, int s)
+{
+    print_space(s);
+    if (t == int_type)
+        printf("(int)\n");
+    else if (t == float_type)
+        printf("(float)\n");
+    else if (t == char_type)
+        printf("(char %d)\n", t->size);
+    else if (t == void_type)
+        printf("(void)\n");
+    else if (t->kind == T_NULL)
+        printf("(null)\n");
+    else if (t->prt)
+        printf("(DONE:%x)\n", t);
+    else
+        switch (t->kind)
+        {
+        case T_ENUM:
+            t->prt = TRUE;
+            printf("ENUM\n");
+            print_space(s);
+            printf("| ENUMERATORS\n");
+            prt_A_ID_LIST(t->field, s + 2);
+            break;
+        case T_POINTER:
+            t->prt = TRUE;
+            printf("POINTER\n");
+            print_space(s);
+            printf("| ELEMENT_TYPE\n");
+            prt_A_TYPE(t->element_type, s + 2);
+            break;
+        case T_ARRAY:
+            t->prt = TRUE;
+            printf("ARRAY\n");
+            print_space(s);
+            printf("| INDEX\n");
+            if (t->expr)
+                prt_expression(t->expr, s + 2);
+            else {
+                print_space(s + 2); printf("(none)\n");
+            }
+            print_space(s);
+            printf("| ELEMENT_TYPE\n");
+            prt_A_TYPE(t->element_type, s + 2);
+            break;
+        case T_STRUCT:
+            t->prt = TRUE;
+            printf("STRUCT\n");
+            print_space(s);
+            printf("| FIELD\n");
+            prt_A_ID_LIST(t->field, s + 2);
+            break;
+        case T_UNION:
+            t->prt = TRUE;
+            printf("UNION\n");
+            print_space(s);
+            printf("| FIELD\n");
+            prt_A_ID_LIST(t->field, s + 2);
+            break;
+        case T_FUNC:
+            t->prt = TRUE;
+            printf("FUNCTION\n");
+            print_space(s);
+            printf("| PARAMETER\n");
+            prt_A_ID_LIST(t->field, s + 2);
+            print_space(s);
+            printf("| TYPE\n");
+            prt_A_TYPE(t->element_type, s + 2);
+            if (t->expr)
+            {
+                print_space(s);
+                printf("| BODY\n");
+                prt_statement(t->expr, s + 2);
+            }
+        }
+}
+
+void prt_A_ID_LIST(A_ID *id, int s)
+{
+    while (id)
+    {
+        prt_A_ID(id, s);
+        id = id->link;
+    }
+}
+
+
+
+void prt_A_ID_NAME(A_ID *id, int s)
+{
+    print_space(s);
+    printf("(ID=\"%s\") TYPE:%x KIND:%s SPEC=%s LEV=%d VAL=%d ADDR=%d \n", id->name, id->type, id_kind_name[id->kind], spec_name[id->specifier], id->level, id->value, id->address);
+}
+
+void prt_A_ID(A_ID *id, int s)
+{
+    print_space(s);
+    printf("(ID=\"%s\") TYPE:%x KIND:%s SPEC=%s LEV=%d VAL=%d ADDR=%d \n", id->name, id->type, id_kind_name[id->kind], spec_name[id->specifier], id->level, id->value, id->address);
+    if (id->type)
+    {
+        print_space(s);
+        printf("| TYPE\n");
+        prt_A_TYPE(id->type, s + 2);
+    }
+    if (id->init)
+    {
+        print_space(s);
+        printf("| INIT\n");
+        if (id->kind == ID_ENUM_LITERAL)
+            prt_expression(id->init,s+2);
+        else
+            prt_initializer(id->init, s + 2);
+    }
+}
+
+
+void code_generation(A_NODE *node) {
+    gen_program(node);
+    gen_literal_table();
+}
+
+void gen_literal_table() {
+    int i;
+    for (i = 1; i <= literal_no; i++) {
+        fprintf(fout, ".literal %5d ", literal_table[i].addr);
+        if (literal_table[i].type == int_type)
+            fprintf(fout, "%d\n", literal_table[i].value.i);
+        else if (literal_table[i].type == float_type)
+            fprintf(fout, "%f\n", literal_table[i].value.f);
+        else if (literal_table[i].type == char_type)
+            fprintf(fout, "%d\n", literal_table[i].value.c);
+        else if (literal_table[i].type == string_type)
+            fprintf(fout, "%s\n", literal_table[i].value.s);
+    }
+}
+
+void gen_program(A_NODE *node) {
+    switch (node->name) {
+        case N_PROGRAM :
+            gen_code_i(INT, 0, node->value);
+            gen_code_s(SUP, 0, "main");
+            gen_code_i(RET, 0, 0);
+            gen_declaration_list((A_ID *) node->clink);
+            break;
+        default :
+            gen_error(100, node->line,"");
+            break;
+    }
+}
+
+
+void gen_expression(A_NODE *node) {
+    A_ID *id;
+    A_TYPE *t;
+    int i, ll;
+    switch (node->name) {
+        case N_EXP_IDENT :
+            id = (A_ID *) node->clink;
+            t = id->type;
+            switch (id->kind) {
+                case ID_VAR:
+                case ID_PARM:
+                    switch (t->kind) {
+                        case T_ENUM:
+                        case T_POINTER:
+                            gen_code_i(LOD, id->level, id->address);
+                            break;
+                        case T_ARRAY:
+                            if (id->kind == ID_VAR)
+                                gen_code_i(LDA, id->level, id->address);
+                            else
+                                gen_code_i(LOD, id->level, id->address);
+                            break;
+                        case T_STRUCT:
+                        case T_UNION:
+                            gen_code_i(LDA, id->level, id->address);
+                            i = id->type->size;
+                            gen_code_i(LDI, 0, i % 4 ? i / 4 + 1 : i / 4);
+                            break;
+                        default:
+                            gen_error(11, id->line, "");
+                            break;
+                    }
+                    break;
+                case ID_ENUM_LITERAL:
+                    gen_code_i(LITI, 0, id->init);
+                    break;
+                default:
+                    gen_error(11, node->line, "");
+                    break;
+            }
+            break;
+        case N_EXP_INT_CONST :
+            gen_code_i(LITI, 0, node->clink);
+            break;
+        case N_EXP_FLOAT_CONST :
+            i = node->clink;
+            gen_code_i(LOD, 0, literal_table[i].addr);
+            break;
+        case N_EXP_CHAR_CONST :
+            gen_code_i(LITI, 0, node->clink);
+            break;
+        case N_EXP_STRING_LITERAL :
+            i = node->clink;
+            gen_code_i(LDA, 0, literal_table[i].addr);
+            break;
+        case N_EXP_ARRAY :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            // gen_code_i(CHK,0,node->llink->type->expr);
+            if (node->type->size > 1) {
+                gen_code_i(LITI, 0, node->type->size);
+                gen_code_i(MULI, 0, 0);
+            }
+            gen_code_i(OFFSET, 0, 0);
+            if (!isArrayType(node->type)) {
+                i = node->type->size;
+                if (i == 1) gen_code_i(LDIB, 0, 0);
+                else
+                    gen_code_i(LDI, 0, i % 4 ? i / 4 + 1 : i / 4);
+            }
+            break;
+        case N_EXP_FUNCTION_CALL :
+            t = node->llink->type;
+            i = t->element_type->element_type->size;
+            if (i % 4) i = i / 4 * 4 + 4;
+            if (node->rlink) {
+                gen_code_i(INT, 0, 12 + i);
+                gen_arg_expression(node->rlink);
+                gen_code_i(POP, 0, node->rlink->value / 4 + 3);
+            }
+            else
+                gen_code_i(INT, 0, i);
+            gen_expression(node->llink);
+            gen_code_i(CAL, 0, 0);
+            break;
+        case N_EXP_STRUCT :
+            gen_expression_left(node->llink);
+            id = (A_ID *) node->rlink;
+            if (id->address > 0) {
+                gen_code_i(LITI, 0, id->address);
+                gen_code_i(OFFSET, 0, 0);
+            }
+            if (!isArrayType(node->type)) {
+                i = node->type->size;
+                if (i == 1) gen_code_i(LDIB, 0, 0);
+                else gen_code_i(LDI, 0, i % 4 ? i / 4 + 1 : i / 4);
+            }
+            break;
+        case N_EXP_ARROW:
+            gen_expression(node->llink);
+            id = node->rlink;
+            if (id->address > 0) {
+                gen_code_i(LITI, 0, id->address);
+                gen_code_i(OFFSET, 0, 0);
+            }
+            if (!isArrayType(node->type)) {
+                i = node->type->size;
+                if (i == 1)
+                    gen_code_i(LDIB, 0, 0);
+                else
+                    gen_code_i(LDI, 0, i % 4 ? i / 4 + 1 : i / 4);
+            }
+            break;
+
+        case N_EXP_POST_INC :
+            gen_expression(node->clink);
+            gen_expression_left(node->clink);
+            t = node->type;
+            if (node->type->size == 1)
+                gen_code_i(LDXB, 0, 0);
+            else
+                gen_code_i(LDX, 0, 1);
+            if (isPointerOrArrayType(node->type)) {
+                gen_code_i(LITI, 0, node->type->element_type->size);
+                gen_code_i(ADDI, 0, 0);
+            }
+            else if (isFloatType(node->type))
+                gen_code_i(INCF, 0, 0);
+            else
+                gen_code_i(INCI, 0, 0);
+            if (node->type->size == 1)
+                gen_code_i(STOB, 0, 0);
+            else
+                gen_code_i(STO, 0, 1);
+            break;
+        case N_EXP_POST_DEC :
+            gen_expression(node->clink);
+            gen_expression_left(node->clink);
+            t = node->type;
+            if (node->type->size == 1) gen_code_i(LDXB, 0, 0);
+            else
+                gen_code_i(LDX, 0, 1);
+            if (isPointerOrArrayType(node->type)) {
+                gen_code_i(LITI, 0, node->type->element_type->size);
+                gen_code_i(SUBI, 0, 0);
+            } else if (isFloatType(node->type))
+                gen_code_i(DECF, 0, 0);
+            else
+                gen_code_i(DECI, 0, 0);
+            if (node->type->size == 1)
+                gen_code_i(STOB, 0, 0);
+            else
+                gen_code_i(STO, 0, 1);
+            break;
+
+        case N_EXP_PRE_INC :
+            gen_expression_left(node->clink);
+            t = node->type;
+            if (node->type->size == 1)
+                gen_code_i(LDXB, 0, 0);
+            else
+                gen_code_i(LDX, 0, 1);
+            if (isPointerOrArrayType(node->type)) {
+                gen_code_i(LITI, 0, node->type->element_type->size);
+                gen_code_i(ADDI, 0, 0);
+            } else if (isFloatType(node->type)) {
+                gen_code_i(INCF, 0, 0);
+            } else {
+                gen_code_i(INCI, 0, 0);
+            }
+
+            if (node->type->size == 1) {
+                gen_code_i(STXB, 0, 0);
+            } else {
+                gen_code_i(STX, 0, 1);
+            }
+            break;
+
+        case N_EXP_PRE_DEC :
+            gen_expression_left(node->clink);
+            t = node->type;
+            if (node->type->size == 1)
+                gen_code_i(LDXB, 0, 0);
+            else
+                gen_code_i(LDX, 0, 1);
+            if (isPointerOrArrayType(node->type)) {
+                gen_code_i(LITI, 0, node->type->element_type->size);
+                gen_code_i(SUBI, 0, 0);
+            } else if (isFloatType(node->type))
+                gen_code_i(DECF, 0, 0);
+            else
+                gen_code_i(DECI, 0, 0);
+            if (node->type->size == 1)
+                gen_code_i(STXB, 0, 0);
+            else
+                gen_code_i(STX, 0, 1);
+            break;
+
+        case N_EXP_NOT :
+            gen_expression(node->clink);
+            gen_code_i(NOT, 0, 0);
+            break;
+
+        case N_EXP_PLUS :
+            gen_expression(node->clink);
+            break;
+        case N_EXP_MINUS :
+            gen_expression(node->clink);
+            if (isFloatType(node->type))
+                gen_code_i(MINUSF, 0, 0);
+            else
+                gen_code_i(MINUSI, 0, 0);
+            break;
+
+        case N_EXP_AMP :
+            gen_expression_left(node->clink);
+            break;
+        case N_EXP_STAR :
+            gen_expression(node->clink);
+            i = node->type->size;
+            if (i == 1)
+                gen_code_i(LDIB, 0, 0);
+            else
+                gen_code_i(LDI, 0, i % 4 ? i / 4 + 1 : i / 4);
+            break;
+
+        case N_EXP_SIZE_EXP :
+            gen_code_i(LITI, 0, node->clink);
+            break;
+        case N_EXP_SIZE_TYPE :
+            gen_code_i(LITI, 0, node->clink);
+            break;
+        case N_EXP_CAST :
+            gen_expression(node->rlink);
+            if (node->type != node->rlink->type) {
+                if (isFloatType(node->type)) {
+                    gen_code_i(CVTF, 0, 0);
+                }
+                else if (isFloatType(node->rlink->type)) {
+                    gen_code_i(CVTI, 0, 0);
+                }
+            }
+            break;
+
+        case N_EXP_MUL :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            if (isFloatType(node->type))
+                gen_code_i(MULF, 0, 0);
+            else
+                gen_code_i(MULI, 0, 0);
+            break;
+
+        case N_EXP_DIV :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            if (isFloatType(node->type))
+                gen_code_i(DIVF, 0, 0);
+            else
+                gen_code_i(DIVI, 0, 0);
+            break;
+        case N_EXP_MOD :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            gen_code_i(MOD, 0, 0);
+            break;
+
+        case N_EXP_ADD :
+            gen_expression(node->llink);
+            if (isPointerOrArrayType(node->rlink->type)) {
+                gen_code_i(LITI, 0, node->rlink->type->element_type->size);
+                gen_code_i(MULI, 0, 0);
+            }
+            gen_expression(node->rlink);
+            if (isPointerOrArrayType(node->llink->type)) {
+                gen_code_i(LITI, 0, node->llink->type->element_type->size);
+                gen_code_i(MULI, 0, 0);
+            }
+            if (isFloatType(node->type)) gen_code_i(ADDF, 0, 0);
+            else
+                gen_code_i(ADDI, 0, 0);
+            break;
+
+        case N_EXP_SUB :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            if (isPointerOrArrayType(node->llink->type) &&
+                !isPointerOrArrayType(node->rlink->type)) {
+                gen_code_i(LITI, 0, node->llink->type->element_type->size);
+                gen_code_i(MULI, 0, 0);
+            }
+            if (isFloatType(node->type)) gen_code_i(SUBF, 0, 0);
+            else
+                gen_code_i(SUBI, 0, 0);
+            break;
+        case N_EXP_LSS :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            if (isFloatType(node->llink->type))
+                gen_code_i(LSSF, 0, 0);
+            else
+                gen_code_i(LSSI, 0, 0);
+            break;
+        case N_EXP_GTR :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            if (isFloatType(node->llink->type))
+                gen_code_i(GTRF, 0, 0);
+            else
+                gen_code_i(GTRI, 0, 0);
+            break;
+        case N_EXP_LEQ :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            if (isFloatType(node->llink->type)) {
+                gen_code_i(LEQF, 0, 0);
+            }
+            else {
+                gen_code_i(LEQI, 0, 0);
+            }
+            break;
+
+        case N_EXP_GEQ :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            if (isFloatType(node->llink->type))
+                gen_code_i(GEQF, 0, 0);
+            else
+                gen_code_i(GEQI, 0, 0);
+            break;
+        case N_EXP_NEQ :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            if (isFloatType(node->llink->type))
+                gen_code_i(NEQF, 0, 0);
+            else
+                gen_code_i(NEQI, 0, 0);
+            break;
+        case N_EXP_EQL :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            if (isFloatType(node->llink->type))
+                gen_code_i(EQLF, 0, 0);
+            else
+                gen_code_i(EQLI, 0, 0);
+            break;
+        case N_EXP_AND :
+            gen_expression(node->llink);
+            gen_code_l(JPCR, 0, i = get_label());
+            gen_expression(node->rlink);
+            gen_label_number(i);
+            break;
+        case N_EXP_OR :
+            gen_expression(node->llink);
+            gen_code_l(JPTR, 0, i = get_label());
+            gen_expression(node->rlink);
+            gen_label_number(i);
+            break;
+        case N_EXP_ASSIGN :
+            gen_expression_left(node->llink);
+            gen_expression(node->rlink);
+            i = node->type->size;
+            if (i == 1) gen_code_i(STXB, 0, 0);
+            else
+                gen_code_i(STX, 0, i % 4 ? i / 4 + 1 : i / 4);
+            break;
+        default :
+            gen_error(100, node->line, "");
+            break;
+    }
+}
+
+void gen_expression_left(A_NODE *node) {
+    A_ID *id;
+    A_TYPE *t;
+    int result;
+    switch (node->name) {
+        case N_EXP_IDENT :
+            id = node->clink;
+            t = id->type;
+            switch (id->kind) {
+                case ID_VAR:
+                case ID_PARM:
+                    switch (t->kind) {
+                        case T_ENUM:
+                        case T_POINTER:
+                        case T_STRUCT:
+                        case T_UNION:
+                            gen_code_i(LDA, id->level, id->address);
+                            break;
+                        case T_ARRAY:
+                            if (id->kind == ID_VAR)
+                                gen_code_i(LDA, id->level, id->address);
+                            else
+                                gen_code_i(LOD, id->level, id->address);
+                            break;
+                        default:
+                            gen_error(13, node->line, id->name);
+                            break;
+                    }
+                    break;
+                case ID_FUNC:
+                    gen_code_s(ADDR, 0, id->name);
+                    break;
+                default:
+                    gen_error(13, node->line, id->name);
+                    break;
+            }
+            break;
+        case N_EXP_ARRAY :
+            gen_expression(node->llink);
+            gen_expression(node->rlink);
+            // gen_code_i(CHK,0,node->llink->type->expr);
+            if (node->type->size > 1) {
+                gen_code_i(LITI, 0, node->type->size);
+                gen_code_i(MULI, 0, 0);
+            }
+            gen_code_i(OFFSET, 0, 0);
+            break;
+
+        case N_EXP_STRUCT :
+            gen_expression_left(node->llink);
+            id = node->rlink;
+            if (id->address > 0) {
+                gen_code_i(LITI, 0, id->address);
+                gen_code_i(OFFSET, 0, 0);
+            }
+            break;
+        case N_EXP_ARROW :
+            gen_expression(node->llink);
+            id = node->rlink;
+            if (id->address > 0) {
+                gen_code_i(LITI, 0, id->address);
+                gen_code_i(OFFSET, 0, 0);
+            }
+            break;
+
+        case N_EXP_STAR :
+            gen_expression(node->clink);
+            break;
+        case N_EXP_INT_CONST :
+        case N_EXP_FLOAT_CONST :
+        case N_EXP_CHAR_CONST :
+        case N_EXP_STRING_LITERAL :
+        case N_EXP_FUNCTION_CALL :
+        case N_EXP_POST_INC :
+        case N_EXP_POST_DEC :
+        case N_EXP_PRE_INC :
+        case N_EXP_PRE_DEC :
+        case N_EXP_NOT :
+        case N_EXP_MINUS :
+        case N_EXP_SIZE_EXP :
+        case N_EXP_SIZE_TYPE :
+        case N_EXP_CAST :
+        case N_EXP_MUL :
+        case N_EXP_DIV :
+        case N_EXP_MOD :
+        case N_EXP_ADD :
+        case N_EXP_SUB :
+        case N_EXP_LSS :
+        case N_EXP_GTR :
+        case N_EXP_LEQ :
+        case N_EXP_GEQ :
+        case N_EXP_NEQ :
+        case N_EXP_EQL :
+        case N_EXP_AMP :
+        case N_EXP_AND :
+        case N_EXP_OR :
+        case N_EXP_ASSIGN :
+            gen_error(12, node->line, "");
+            break;
+        default :
+            gen_error(100, node->line, "");
+            break;
+    }
+}
+
+void gen_arg_expression(A_NODE *node) {
+    A_NODE *n;
+    switch (node->name) {
+        case N_ARG_LIST :
+            gen_expression(node->llink);
+            gen_arg_expression(node->rlink);
+            break;
+        case N_ARG_LIST_NIL :
+            break;
+        default :
+            gen_error(100, node->line, "");
+            break;
+    }
+}
+
+int get_label() {
+    label_no++;
+    return (label_no);
+}
+
+void gen_statement(A_NODE *node, int cont_label, int break_label, A_SWITCH sw[], int *sn) {
+
+    A_SWITCH switch_table[100];
+    int switch_no = 0;
+    A_NODE *n;
+    int i, l1, l2, l3;
+    switch (node->name) {
+        case N_STMT_LABEL_CASE :
+            if (sw) {
+                *sn = *sn + 1;
+                sw[*sn].kind = SW_VALUE;
+                sw[*sn].val = (int) node->llink;
+                sw[*sn].label = l1 = get_label();
+                gen_label_number(l1);
+            }
+            else
+                gen_error(21, node->line, "");
+            gen_statement(node->rlink, cont_label, break_label, sw, sn);
+            break;
+        case N_STMT_LABEL_DEFAULT :
+            if (sw) {
+                *sn = *sn + 1;
+                sw[*sn].kind = SW_DEFAULT;
+                sw[*sn].label = l1 = get_label();
+                gen_label_number(l1);
+            }
+            else
+                gen_error(20, node->line, "");
+            gen_statement(node->clink, cont_label, break_label, sw, sn);
+            break;
+        case N_STMT_COMPOUND:
+            if (node->llink) gen_declaration_list(node->llink);
+            gen_statement_list(node->rlink, cont_label, break_label, sw, sn);
+            break;
+        case N_STMT_EMPTY:
+            break;
+        case N_STMT_EXPRESSION:
+            n = node->clink;
+            gen_expression(n);
+            i = n->type->size;
+            if (i)
+                gen_code_i(POP, 0, i % 4 ? i / 4 + 1 : i / 4);
+            break;
+        case N_STMT_IF:
+            gen_expression(node->llink);
+            gen_code_l(JPC, 0, l1 = get_label());
+            gen_statement(node->rlink, cont_label, break_label, 0, 0);
+            gen_label_number(l1);
+            break;
+        case N_STMT_IF_ELSE:
+            gen_expression(node->llink);
+            gen_code_l(JPC, 0, l1 = get_label());
+            gen_statement(node->clink, cont_label, break_label, 0, 0);
+            gen_code_l(JMP, 0, l2 = get_label());
+            gen_label_number(l1);
+            gen_statement(node->rlink, cont_label, break_label, 0, 0);
+            gen_label_number(l2);
+            break;
+        case N_STMT_SWITCH:   //수업시간에 안하기로 했던거 같은데 일단 책 내용 그대로 적었습니다.
+            gen_expression(node->llink);
+            gen_code_l(SWITCH, 0, l1 = get_label());
+            gen_code_l(JMP, 0, l2 = get_label());
+            gen_statement(node->rlink, cont_label, l2, switch_table, &switch_no);
+            gen_label_number(l1);
+            for (i = 1; i <= switch_no; i++) {
+                if (switch_table[i].kind == SW_VALUE)
+                    gen_code_i(SWVALUE, 0, switch_table[i].val);
+                else
+                    gen_code_i(SWDEFAULT, 0, 0);
+                gen_code_l(SWLABEL, 0, switch_table[i].label);
+            }
+            gen_code_i(SWEND, 0, 0);
+            gen_label_number(l2);
+            break;
+        case N_STMT_WHILE:
+            l3 = get_label();
+            gen_label_number(l1 = get_label());
+            gen_expression(node->llink);
+            gen_code_l(JPC, 0, l2 = get_label());
+            gen_statement(node->rlink, l3, l2, 0, 0);
+            gen_label_number(l3);
+            gen_code_l(JMP, 0, l1);
+            gen_label_number(l2);
+            break;
+        case N_STMT_DO:
+            l3 = get_label();
+            l2 = get_label();
+            gen_label_number(l1 = get_label());
+            gen_statement(node->llink, l2, l3, 0, 0);
+            gen_label_number(l2);
+            gen_expression(node->rlink);
+            gen_code_l(JPT, 0, l1);
+            gen_label_number(l3);
+            break;
+        case N_STMT_FOR:
+            n = node->llink;
+            l3 = get_label();
+            if (n->llink) {
+                gen_expression(n->llink);
+                i = n->llink->type->size;
+                if (i)
+                    gen_code_i(POP, 0, i % 4 ? i / 4 + 1 : i / 4);
+            }
+            gen_label_number(l1 = get_label());
+            l2 = get_label();
+            if (n->clink) {
+                gen_expression(n->clink);
+                gen_code_l(JPC, 0, l2);
+            }
+            gen_statement(node->rlink, l3, l2, 0, 0);
+            gen_label_number(l3);
+            if (n->rlink) {
+                gen_expression(n->rlink);
+                i = n->rlink->type->size;
+                if (i)
+                    gen_code_i(POP, 0, i % 4 ? i / 4 + 1 : i / 4);
+            }
+            gen_code_l(JMP, 0, l1);
+            gen_label_number(l2);
+            break;
+        case N_STMT_CONTINUE:
+            if (cont_label) gen_code_l(JMP, 0, cont_label);
+            else
+                gen_error(22, node->line, "");
+            break;
+        case N_STMT_BREAK:
+            if (break_label)
+                gen_code_l(JMP, 0, break_label);
+            else
+                gen_error(23, node->line, "");
+            break;
+        case N_STMT_RETURN:
+            n = node->clink;
+            if (n) {
+                i = n->type->size;
+                if (i % 4) i = i / 4 * 4 + 4;
+                gen_code_i(LDA, 1, -i);
+                gen_expression(n);
+                gen_code_i(STO, 0, i / 4);
+            }
+            gen_code_i(RET, 0, 0);
+            break;
+        default :
+            gen_error(100, node->line, "");
+            break;
+    }
+}
+
+void gen_statement_list(A_NODE *node, int cont_label, int break_label, A_SWITCH sw[], int *sn) {
+    switch (node->name) {
+        case N_STMT_LIST:
+            gen_statement(node->llink, cont_label, break_label, sw, sn);
+            gen_statement_list(node->rlink, cont_label, break_label, sw, sn);
+            break;
+        case N_STMT_LIST_NIL:
+            break;
+        default :
+            gen_error(100, node->line, "");
+            break;
+    }
+}
+
+void gen_initializer_global(A_NODE *node, A_TYPE *t, int addr) {
+}
+
+void gen_initializer_local(A_NODE *node, A_TYPE *t, int addr) {
+    
+}
+
+void gen_declaration_list(A_ID *id) {
+    while (id) {
+        gen_declaration(id);
+        id = id->link;
+    }
+}
+
+void gen_declaration(A_ID *id) {
+    int i;
+    A_NODE *node;
+    switch (id->kind) {
+        case ID_VAR:
+            if (id->init) {
+                if (id->level == 0) {
+                    gen_initializer_global(id->init, id->type, id->address);
+                } else {
+                    gen_initializer_local(id->init, id->type, id->address);
+                }
+            }
+            break;
+
+        case ID_FUNC:
+            if (id->type->expr) {
+                gen_label_name(id->name);
+                gen_code_i(INT, 0, id->type->local_var_size);
+                gen_statement(id->type->expr, 0, 0, 0, 0);
+                gen_code_i(RET, 0, 0);
+            }
+            break;
+
+        case ID_PARM:
+        case ID_TYPE:
+        case ID_ENUM:
+        case ID_STRUCT:
+        case ID_FIELD:
+        case ID_ENUM_LITERAL:
+        case ID_NULL:
+            break;
+        default:
+            gen_error(100, id->line, "");
+            break;
+    }
+}
+
+void gen_error(int i, int ll, char *s) {
+    gen_err++;
+    printf("*** error at line %d: ", ll);
+    switch (i) {
+        case 11:
+            printf("illegal identifier in expression \n");
+            break;
+        case 12:
+            printf("illegal l-value expression \n");
+            break;
+        case 13:
+            printf("identifier %s not l-value expression \n", s);
+            break;
+        case 20:
+            printf("illegal default label in switch statement \n");
+            break;
+        case 21:
+            printf("illegal case label in switch statement \n");
+            break;
+        case 22:
+            printf("no destination for continue statement \n");
+            break;
+        case 23:
+            printf("no destination for break statement \n");
+            break;
+        case 100:
+            printf("fatal compiler error during code generation\n");
+            break;
+        default:
+            printf("unknown \n");
+            break;
+    }
+}
+
+void gen_code_i(OPCODE op, int l, int a) {
+    fprintf(fout, "\t%9s %d, %d\n", opcode_name[op], l, a);
+}
+
+void gen_code_f(OPCODE op, int l, float a) {
+    fprintf(fout, "\t%9s %d, %f\n", opcode_name[op], l, a);
+}
+
+void gen_code_s(OPCODE op, int l, char *a) {
+    fprintf(fout, "\t%9s %d, %s\n", opcode_name[op], l, a);
+}
+
+void gen_code_l(OPCODE op, int l, int a) {
+    fprintf(fout, "\t%9s %d, L%d\n", opcode_name[op], l, a);
+}
+
+void gen_label_number(int i) {
+    fprintf(fout, "L%d:\n", i);
+}
+
+void gen_label_name(char *s) {
+    fprintf(fout, "%s:\n", s);
+}
 #define YYBISON 1
 
 /* Bison version.  */
@@ -2653,6 +4065,7 @@ void prt_A_ID(A_ID *id, int s)
 #line 1 "yacc.y"
 
 #include <stdio.h>
+// #include <type.h>
 
 #define YYSTYPE_IS_DECLARED 1
 typedef long YYSTYPE;
@@ -5337,11 +6750,22 @@ int main(int argc, char *argv[]) {
 		printf("cannot open input file: %s\n",argv[argc-1]);
 		exit(1);
 	}
-	
+	if (argc == 2) {
+        if ((fout = fopen("a.asm", "w")) == NULL) {
+            printf("can not open output file: a.asm\n");
+            exit(1);
+        }
+    }
 	initialize();
 	yyparse();
 	if (syntax_err) exit(1);
 	print_ast(root);
+    semantic_analysis(root);
+
+    if (semantic_err) exit(1);
+
+    print_sem_ast(root);
 	printf("\n");
+    code_generation(root);
 	return 0;
 }
